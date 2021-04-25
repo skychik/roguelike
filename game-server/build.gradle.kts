@@ -15,6 +15,8 @@ repositories {
 dependencies {
     implementation(kotlin("stdlib"))
 
+    implementation("ch.qos.logback:logback-classic:1.2.3")
+
     implementation("io.ktor:ktor-server-core:1.5.2")
     implementation("io.ktor:ktor-server-netty:1.5.2")
     implementation("io.ktor:ktor-serialization:1.5.2")
@@ -22,7 +24,7 @@ dependencies {
 }
 
 application {
-
+    mainClassName = "ru.ifmo.sd.httpapi.ApplicationKt"
 }
 
 tasks {
