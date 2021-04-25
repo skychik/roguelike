@@ -22,14 +22,23 @@ object GameConfigurator {
     }
 
     fun configure(levelLength: Int, levelWidth: Int): GameConfiguration {
-        gameLevel = GameLevel(LevelGenerator.generateLevel(
-            levelLength, levelWidth))
+        gameLevel = GameLevel(
+            LevelGenerator.generateLevel(
+                levelLength, levelWidth
+            )
+        )
         val playerId = 1
         val player = Player(playerId)
+        val playerPos = Position(1, 1)
         unitsPositions = UnitsPositionStorage()
         unitsHealths = UnitsHealthStorage()
-        unitsPositions.move(player, Position(1, 1))
+        unitsPositions.move(player, playerPos)
         unitsHealths.addUnit(player)
-        return GameConfiguration(gameLevel.gameLevel, unitsPositions.getPositions(), unitsHealths.getHealths())
+        return GameConfiguration(
+            playerPos,
+            gameLevel.gameLevel,
+            unitsPositions.getPositions(),
+            unitsHealths.getHealths()
+        )
     }
 }
