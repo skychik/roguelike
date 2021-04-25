@@ -5,6 +5,8 @@ import ru.ifmo.sd.world.representation.units.GameUnit
 class UnitsHealthStorage {
     private val healths: MutableMap<GameUnit, Int> = HashMap()
 
+    fun getHealths() = this.healths
+
     fun addUnit(unit: GameUnit, value: Int = 100) {
         healths[unit] = value
     }

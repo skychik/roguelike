@@ -1,5 +1,6 @@
 package ru.ifmo.sd.world.representation.units
 
-abstract class GameUnit {
-    abstract val id: Int
-}
+import kotlinx.serialization.Serializable
+
+@Serializable
+open class GameUnit(val id: Int)

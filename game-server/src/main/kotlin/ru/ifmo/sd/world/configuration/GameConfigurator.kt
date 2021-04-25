@@ -25,8 +25,10 @@ object GameConfigurator {
         gameLevel = GameLevel(LevelGenerator.generateLevel(
             levelLength, levelWidth))
         val player = Player(1)
+        unitsPositions = UnitsPositionStorage()
+        unitsHealths = UnitsHealthStorage()
         unitsPositions.move(player, Position(0, 0))
         unitsHealths.addUnit(player)
-        return GameConfiguration(gameLevel, unitsPositions, unitsHealths)
+        return GameConfiguration(gameLevel.gameLevel, unitsPositions.getPositions(), unitsHealths.getHealths())
     }
 }

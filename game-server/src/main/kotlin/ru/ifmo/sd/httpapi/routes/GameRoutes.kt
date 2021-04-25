@@ -11,13 +11,13 @@ import ru.ifmo.sd.world.events.EventsHandler
 
 fun Route.gameRouting() {
     route("/") {
-        post {
+        post("/start") {
             val levelConfiguration = call.receive<LevelConfiguration>()
             val startedGame = EventsHandler.startGame(levelConfiguration)
-            call.respond(message = startedGame,status = HttpStatusCode.Created)
+            call.respond(message = startedGame, status = HttpStatusCode.Created)
         }
 
-        post {
+        post("/move") {
             val moveEventData = call.receive<MoveEventData>()
             EventsHandler.move(moveEventData.targetUnit, moveEventData.newPos)
             call.respondText("Position successfully updated", status = HttpStatusCode.Accepted)
