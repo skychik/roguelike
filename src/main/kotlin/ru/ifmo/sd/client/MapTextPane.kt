@@ -1,5 +1,6 @@
-package ru.ifmo.sd.stuff
+package ru.ifmo.sd.client
 
+import ru.ifmo.sd.stuff.MapSymbolColor
 import java.awt.Color
 import javax.swing.JTextPane
 import javax.swing.text.Style
