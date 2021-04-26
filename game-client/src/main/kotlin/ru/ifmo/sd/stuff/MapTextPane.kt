@@ -1,13 +1,15 @@
 package ru.ifmo.sd.stuff
 
+import ru.ifmo.sd.world.representation.Position
 import java.awt.Color
 import javax.swing.JTextPane
 import javax.swing.text.Style
 import javax.swing.text.StyleConstants
+import java.awt.Graphics;
 
-object MapTextPane : JTextPane() {
+class MapTextPane : JTextPane() {
     private val FONT_FAMILY = "Monospaced"
-    private val FONT_SIZE = 12
+    private val FONT_SIZE = 14
     val colorMap: MutableMap<MapSymbolColor, Style> = mutableMapOf()
 
     init {
