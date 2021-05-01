@@ -1,11 +1,16 @@
 package ru.ifmo.sd.stuff
 
-import ru.ifmo.sd.stuff.SymbolMap.Symbol.*
+import kotlinx.coroutines.runBlocking
+import ru.ifmo.sd.makeMove
+import ru.ifmo.sd.makeNewGameConfiguration
+import ru.ifmo.sd.stuff.ColoredSymbol.*
 import ru.ifmo.sd.world.configuration.GameConfiguration
 import ru.ifmo.sd.world.representation.Position
 import java.awt.BorderLayout
-import java.awt.Color
+import java.awt.Color.*
+import java.awt.Container
 import java.awt.event.KeyEvent
+import java.awt.event.KeyEvent.*
 import java.awt.event.KeyListener
 import javax.swing.*
 import javax.swing.text.Style
@@ -14,40 +19,23 @@ enum class MoveEvent {
     UP, DOWN, LEFT, RIGHT, NONE
 }
 
-class GUI : JFrame, KeyListener {
-    constructor(title: String, gameConfiguration: GameConfiguration) : super() {
-        this.mainPanel = JPanel()
-        this.headerPanel = JPanel()
-        this.mapPanel = JPanel()
-        this.infoPanel = JPanel()
-        this.map = SymbolMap(gameConfiguration.level)
-        this.mapTextPane = MapTextPane()
-        this.currPos = gameConfiguration.playerPos
-//        this.keyListener = MyKeyListener()
+class GUI(title: String, gameConfiguration: GameConfiguration) : JFrame(), KeyListener {
+    private var currPos = gameConfiguration.playerPos
+    private val mainPanel = JPanel()
+    private val headerPanel = JPanel()
+    private val mapPanel = JPanel()
+    private val infoPanel = JPanel()
+    private var map = SymbolMap(gameConfiguration)
+    private var mapTextPane = MapTextPane()
+
+    init {
         createUI(title)
+        start()
     }
-
-//    private enum class State {
-//        STARTING, INPUT_WAITING, PENDING_REQUEST
-//    }
-
-
-    private var currPos: Position
-    private val mainPanel: JPanel
-    private val headerPanel: JPanel
-    private val mapPanel: JPanel
-    private val infoPanel: JPanel
-    private var map: SymbolMap
-    private var mapTextPane: MapTextPane
-//    private var keyListener: MyKeyListener
-
-//    private var lock = Object()
-//    private var state = State.STARTING
 
     private fun createUI(title: String) {
         setTitle(title)
 
-//        createMenuBar()
         createLayout()
         makeNotFocusable()
 
@@ -63,60 +51,21 @@ class GUI : JFrame, KeyListener {
 
         requestFocus()
         requestFocusInWindow()
-
-//        state = State.INPUT_WAITING
-        start()
     }
 
     private fun start() {
         Thread {
             while (true) {
-//                if (state === GAME_OVERED) break
-//                if (state === GAME_PUSHED) {
-//                    synchronized(lock) {
-//                        try {
-//                            lock.wait()
-//                        } catch (e: InterruptedException) {
-//                            break
-//                        }
-//                    }
-//                }
 
                 try {
                     Thread.sleep(30)
                 } catch (e: InterruptedException) {
                     break
                 }
-//                when (state) {
-//                    GAME_BARRIER_SELECT -> bselector.draw(bufferScreen)
-//                    GAME_MAP_SELECT -> {
-//                    }
-//                    GAME_RUNING -> runningDraw()
-//                    GAME_FAILED, GAME_SUCCEED -> if (gresult != null) gresult.draw(bufferScreen)
-//                }
 
                 mainPanel.repaint()
             }
         }.start()
-    }
-
-
-    private fun createMenuBar() {
-        val menubar = JMenuBar()
-        val icon = ImageIcon("src/main/resources/exit.png")
-
-        val file = JMenu("File")
-        file.mnemonic = KeyEvent.VK_F
-
-        val eMenuItem = JMenuItem("Exit", icon)
-        eMenuItem.mnemonic = KeyEvent.VK_E
-        eMenuItem.toolTipText = "Exit application"
-        eMenuItem.addActionListener { System.exit(0) }
-
-        file.add(eMenuItem)
-        menubar.add(file)
-
-        jMenuBar = menubar
     }
 
     private fun createLayout() {
@@ -132,7 +81,7 @@ class GUI : JFrame, KeyListener {
         mapPanel.setSize(550, 550)
         mainPanel.add(mapPanel, BorderLayout.WEST)
         mapPanel.add(mapTextPane)
-        createMap()
+        createMapTextPane()
 
         infoPanel.setSize(250, 550)
         mainPanel.add(infoPanel, BorderLayout.EAST)
@@ -142,30 +91,34 @@ class GUI : JFrame, KeyListener {
 //        infoPanel.add(hpLabel, BorderLayout.WEST)
     }
 
-    private fun makeNotFocusable() {
-        mainPanel.isFocusable = false
-        headerPanel.isFocusable = false
-        mapPanel.isFocusable = false
-        infoPanel.isFocusable = false
-        mapTextPane.isFocusable = false
+    private fun makeNotFocusable(container: Container = this) {
+        container.isFocusable = false
+        for (c in container.components) {
+            if (c is Container) makeNotFocusable(c)
+        }
     }
 
-    private fun createMap() {
+    private fun createMapTextPane() {
+        mapTextPane.document.remove(0, mapTextPane.document.length)
         for (i in 0 until map.rowSize) {
             if (i != 0) {
-                insertText("\n", mapTextPane.colorMap[MapSymbolColor.BLACK]!!)
+                insertText("\n", mapTextPane.colorMap[BLACK]!!)
             }
             for (j in 0 until map.columnSize) {
-                if (i == currPos.row && j == currPos.column) {
-                    val style = mapTextPane.colorMap[MapSymbolColor.RED]!!
-                    insertText(PLAYER.symbol.toString(), style)
-                } else {
-                    val symbol = map.rows[i][j]
-                    val style = mapTextPane.colorMap[symbol.color]!!
-                    insertText(symbol.content.toString(), style)
-                }
+                val symbol = map.rows[i][j]
+                val style = mapTextPane.colorMap[symbol.color]!!
+                insertText(symbol.char.toString(), style)
             }
         }
+        // TODO: make lineSpacing = 0
+//        mapTextPane.margin = Insets(0, 0, 0, 0)
+//        mapTextPane.selectAll()
+//        val aSet = SimpleAttributeSet(mapTextPane.paragraphAttributes)
+//        val doc = mapTextPane.styledDocument
+//        mapTextPane.setParagraphAttributes(aSet, false)
+//        doc.setParagraphAttributes(0, doc.length, aSet, false)
+//        StyleConstants.setLineSpacing(aSet, 0F)
+//        mapTextPane.select(0, 0)
     }
 
     private fun insertText(string: String, style: Style) {
@@ -182,6 +135,8 @@ class GUI : JFrame, KeyListener {
     var moved = MoveEvent.NONE
     var didMove = false
 
+    override fun keyReleased(e: KeyEvent?) {}
+    override fun keyTyped(e: KeyEvent?) {}
     override fun keyPressed(e: KeyEvent?) {
         if (e != null) {
             println("Some key pressed, current=$moved, keyCode=${e.keyCode}, didMove=$didMove, currPos=$currPos")
@@ -189,71 +144,41 @@ class GUI : JFrame, KeyListener {
             println("e == null")
         }
         if (!didMove) {
-            if (e == null) {
-                moved = MoveEvent.NONE
-                return
-            }
-
-            // TODO: rewrite to "when (e.keyCode)"
-            // note: may be not working when several keys pressed at the same time
-            if (e.keyCode == KeyEvent.VK_UP || e.keyCode == KeyEvent.VK_W) {
-                if (currPos.row > 0) {
-                    val currRow = currPos.row - 1
-                    val currColumn = currPos.column
-                    val currSymb = map.rows[currRow][currColumn]
-                    if (currSymb.content == NONE.symbol) {
+            when (e?.keyCode) {
+                null -> {
+                    moved = MoveEvent.NONE
+                }
+                VK_UP, VK_W -> {
+                    val newPos = Position(currPos.row - 1, currPos.column)
+                    if (replaceSymbol(currPos, newPos)) {
                         didMove = true
                         moved = MoveEvent.UP
-                        map.rows[currPos.row][currPos.column] = ColoredSymbol(NONE.symbol)
-                        map.rows[currRow][currColumn] = ColoredSymbol(PLAYER.symbol, currSymb.color)
-                        replaceSymbolAt(currPos.row, currPos.column, NONE.symbol)
-                        replaceSymbolAt(currPos.row - 1, currPos.column, PLAYER.symbol)
-                        currPos = Position(currPos.row - 1, currPos.column)
+                        currPos = newPos
                     }
                 }
-            }
-            if (e.keyCode == KeyEvent.VK_DOWN || e.keyCode == KeyEvent.VK_S) {
-                val currRow = currPos.row + 1
-                val currColumn = currPos.column
-                val currSymb = map.rows[currRow][currColumn]
-                if (currPos.row < map.rowSize - 1 && currSymb.content == NONE.symbol) {
-                    didMove = true
-                    moved = MoveEvent.DOWN
-                    map.rows[currPos.row][currPos.column] = ColoredSymbol(NONE.symbol)
-                    map.rows[currRow][currColumn] = ColoredSymbol(PLAYER.symbol, currSymb.color)
-                    replaceSymbolAt(currPos.row, currPos.column, NONE.symbol)
-                    replaceSymbolAt(currPos.row + 1, currPos.column, PLAYER.symbol)
-                    currPos = Position(currPos.row + 1, currPos.column)
+                VK_DOWN, VK_S -> {
+                    val newPos = Position(currPos.row + 1, currPos.column)
+                    if (replaceSymbol(currPos, newPos)) {
+                        didMove = true
+                        moved = MoveEvent.DOWN
+                        currPos = newPos
+                    }
                 }
-            }
-            if (e.keyCode == KeyEvent.VK_LEFT || e.keyCode == KeyEvent.VK_A) {
-                if (currPos.column > 0) {
-                    val currRow = currPos.row
-                    val currColumn = currPos.column - 1
-                    val currSymb = map.rows[currRow][currColumn]
-                    if (currSymb.content == NONE.symbol) {
+                VK_LEFT, VK_A -> {
+                    val newPos = Position(currPos.row, currPos.column - 1)
+                    if (replaceSymbol(currPos, newPos)) {
                         didMove = true
                         moved = MoveEvent.LEFT
-                        map.rows[currPos.row][currPos.column] = ColoredSymbol(NONE.symbol)
-                        map.rows[currRow][currColumn] = ColoredSymbol(PLAYER.symbol, currSymb.color)
-                        replaceSymbolAt(currPos.row, currPos.column, NONE.symbol)
-                        replaceSymbolAt(currPos.row, currPos.column - 1, PLAYER.symbol)
-                        currPos = Position(currPos.row, currPos.column - 1)
+                        currPos = newPos
                     }
                 }
-            }
-            if (e.keyCode == KeyEvent.VK_RIGHT || e.keyCode == KeyEvent.VK_D) {
-                val currRow = currPos.row
-                val currColumn = currPos.column + 1
-                val currSymb = map.rows[currRow][currColumn]
-                if (currPos.column < map.columnSize - 1 && currSymb.content == NONE.symbol) {
-                    didMove = true
-                    moved = MoveEvent.RIGHT
-                    map.rows[currPos.row][currPos.column] = ColoredSymbol(NONE.symbol)
-                    map.rows[currRow][currColumn] = ColoredSymbol(PLAYER.symbol, currSymb.color)
-                    replaceSymbolAt(currPos.row, currPos.column, NONE.symbol)
-                    replaceSymbolAt(currPos.row, currPos.column + 1, PLAYER.symbol)
-                    currPos = Position(currPos.row, currPos.column + 1)
+                VK_RIGHT, VK_D -> {
+                    val newPos = Position(currPos.row, currPos.column + 1)
+                    if (replaceSymbol(currPos, newPos)) {
+                        didMove = true
+                        moved = MoveEvent.RIGHT
+                        currPos = newPos
+                    }
                 }
             }
 
@@ -267,65 +192,43 @@ class GUI : JFrame, KeyListener {
                 this.repaint()
                 this.mapPanel.repaint()
                 this.mapTextPane.repaint()
+
+                runBlocking {
+                    if (currPos.row == map.rowSize - 1 && currPos.column == map.columnSize - 2) {
+                        val newConfig = makeNewGameConfiguration().deserializeBack()
+                        map = SymbolMap(newConfig)
+                        createMapTextPane()
+                        currPos = newConfig.playerPos
+                    } else {
+                        makeMove(currPos)
+                    }
+                }
             }
         }
     }
 
-    private fun replaceSymbolAt(row: Int, column: Int, symbol: Char) {
-        mapTextPane.isEditable = true
-        val index = row * (map.columnSize + 1) + column
-        mapTextPane.select(index, index + 1)
-        println("selected text='${mapTextPane.selectedText}'")
-        mapTextPane.replaceSelection(symbol.toString())
-        if (symbol == PLAYER.symbol) {
-            mapTextPane.selectedTextColor = Color.RED
-        } else {
-            mapTextPane.selectedTextColor = Color.BLACK
+    private fun replaceSymbol(oldPos: Position, newPos: Position, replaceSymb: ColoredSymbol = NONE): Boolean {
+        if (newPos.row < map.rowSize && newPos.row >= 0 &&
+            newPos.column < map.columnSize && newPos.column >= 0 &&
+            map.rows[newPos.row][newPos.column] == NONE
+        ) {
+            val oldSymb = map.rows[oldPos.row][oldPos.column]
+            map.rows[oldPos.row][oldPos.column] = replaceSymb
+            map.rows[newPos.row][newPos.column] = oldSymb
+            replacePaneSymbol(oldPos, replaceSymb)
+            replacePaneSymbol(newPos, oldSymb)
+            return true
         }
-        mapTextPane.isEditable = false
+        return false
     }
 
-    override fun keyReleased(e: KeyEvent?) {}
-    override fun keyTyped(e: KeyEvent?) {}
+    private fun replacePaneSymbol(pos: Position, symbol: ColoredSymbol) {
+        mapTextPane.isEditable = true
+        val index = pos.row * (map.columnSize + 1) + pos.column
+        mapTextPane.select(index, index + 1)
+//        println("selected text='${mapTextPane.selectedText}'")
+        mapTextPane.selectionColor = symbol.color
+        mapTextPane.replaceSelection(symbol.char.toString())
+        mapTextPane.isEditable = false
+    }
 }
-
-
-//private val mapPreviewText = listOf(
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//    "qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09qwert 09",
-//)
-//
-//val mapPreviewSymbols: List<List<Symbol>> =
-//    mapPreviewText.map { s ->
-//        s.map { c -> Symbol(c, MapSymbolColor.BLACK) }
-//    }

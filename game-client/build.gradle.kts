@@ -1,5 +1,6 @@
 plugins {
     java
+    application
     kotlin("jvm") version "1.4.21"
 }
 
@@ -13,11 +14,16 @@ repositories {
 
 dependencies {
     implementation(kotlin("stdlib"))
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.1.0")
     implementation("io.ktor:ktor-client-cio:$ktor_version")
     implementation("io.ktor:ktor-client-gson:$ktor_version")
     implementation("io.ktor:ktor-client-jackson:$ktor_version")
     implementation("io.ktor:ktor-client-serialization:1.5.2")
     implementation(project(":game-server"))
+}
+
+application {
+    mainClass.set("ru.ifmo.sd.MainKt")
 }
 
 tasks.test {
