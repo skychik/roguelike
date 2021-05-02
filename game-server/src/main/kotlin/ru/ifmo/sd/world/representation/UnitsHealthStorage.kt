@@ -1,25 +1,27 @@
 package ru.ifmo.sd.world.representation
 
-import ru.ifmo.sd.world.representation.units.GameUnit
+import ru.ifmo.sd.httpapi.models.Position
 
 class UnitsHealthStorage {
-    private val healths: MutableMap<GameUnit, Int> = HashMap()
+    private val healths: MutableMap<Position, Int> = HashMap()
 
-    fun getHealths() = this.healths
-
-    fun addUnit(unit: GameUnit, value: Int = 100) {
-        healths[unit] = value
+    fun addUnit(pos: Position, value: Int = 100) {
+        healths[pos] = value
     }
 
-    fun increase(gameUnit: GameUnit, value: Int) {
-        healths.merge(gameUnit, value, Int::plus)
+    fun eliminateUnit(pos: Position) {
+        healths.remove(pos)
     }
 
-    fun decrease(gameUnit: GameUnit, value: Int) {
-        healths.merge(gameUnit, value, Int::minus)
+    fun increase(pos: Position, value: Int) {
+        healths.merge(pos, value, Int::plus)
     }
 
-    fun isAlive(gameUnit: GameUnit): Boolean {
-        return healths.getOrDefault(gameUnit, 0) > 0
+    fun decrease(pos: Position, value: Int) {
+        healths.merge(pos, value, Int::minus)
+    }
+
+    fun isAlive(pos: Position): Boolean {
+        return healths.getOrDefault(pos, 0) > 0
     }
 }

@@ -6,21 +6,21 @@ import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import ru.ifmo.sd.httpapi.models.LevelConfiguration
-import ru.ifmo.sd.httpapi.models.MoveEventData
+import ru.ifmo.sd.httpapi.models.PlayerMove
 import ru.ifmo.sd.world.events.EventsHandler
 
 fun Route.gameRouting() {
     route("/") {
-        post("/start") {
+        post("/join") {
             val levelConfiguration = call.receive<LevelConfiguration>()
-            val startedGame = EventsHandler.startGame(levelConfiguration)
+            val startedGame = EventsHandler.join(levelConfiguration)
             call.respond(message = startedGame.makeSerializable(), status = HttpStatusCode.Created)
         }
 
         post("/move") {
-            val moveEventData = call.receive<MoveEventData>()
-            EventsHandler.move(moveEventData.targetUnit, moveEventData.newPos)
-            call.respondText("Position successfully updated", status = HttpStatusCode.Accepted)
+            val playerMove = call.receive<PlayerMove>()
+            val move = EventsHandler.move(playerMove.oldPosition, playerMove.newPosition)
+            call.respond(message = move, status = HttpStatusCode.Accepted)
         }
     }
 }
