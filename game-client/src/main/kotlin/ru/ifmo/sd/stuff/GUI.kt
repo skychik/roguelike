@@ -1,6 +1,7 @@
 package ru.ifmo.sd.stuff
 
 import kotlinx.coroutines.runBlocking
+import ru.ifmo.sd.client
 import ru.ifmo.sd.makeMove
 import ru.ifmo.sd.makeNewGameConfiguration
 import ru.ifmo.sd.stuff.ColoredSymbol.*
@@ -12,6 +13,8 @@ import java.awt.Container
 import java.awt.event.KeyEvent
 import java.awt.event.KeyEvent.*
 import java.awt.event.KeyListener
+import java.awt.event.WindowAdapter
+import java.awt.event.WindowEvent
 import javax.swing.*
 import javax.swing.text.Style
 
@@ -40,6 +43,12 @@ class GUI(title: String, gameConfiguration: GameConfiguration) : JFrame(), KeyLi
         makeNotFocusable()
 
         defaultCloseOperation = EXIT_ON_CLOSE
+        addWindowListener(object : WindowAdapter() {
+            override fun windowClosing(e: WindowEvent) {
+                client!!.close()
+                e.window.dispose()
+            }
+        })
         setSize(800, 600)
         isResizable = false
         setLocationRelativeTo(null)

@@ -14,7 +14,7 @@ repositories {
 
 dependencies {
     implementation(kotlin("stdlib"))
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.1.0")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.4.32")
     implementation("io.ktor:ktor-client-cio:$ktor_version")
     implementation("io.ktor:ktor-client-gson:$ktor_version")
     implementation("io.ktor:ktor-client-jackson:$ktor_version")

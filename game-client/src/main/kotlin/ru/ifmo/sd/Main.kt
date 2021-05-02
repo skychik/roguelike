@@ -19,7 +19,7 @@ import ru.ifmo.sd.world.representation.units.Player
 import java.awt.EventQueue
 
 
-private var client: HttpClient? = null
+internal var client: HttpClient? = null
 
 suspend fun main() {
     client = HttpClient(CIO) {
