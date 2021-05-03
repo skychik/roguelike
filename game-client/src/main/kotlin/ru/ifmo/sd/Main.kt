@@ -1,21 +1,13 @@
 package ru.ifmo.sd
 
 import io.ktor.client.*
-import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.features.json.*
 import io.ktor.client.features.json.serializer.*
 import io.ktor.client.request.*
-import io.ktor.client.statement.*
 import io.ktor.http.*
-import ru.ifmo.sd.httpapi.models.LevelConfiguration
-import ru.ifmo.sd.httpapi.models.MoveEventData
+import ru.ifmo.sd.httpapi.models.*
 import ru.ifmo.sd.stuff.GUI
-import ru.ifmo.sd.world.configuration.GameConfiguration
-import ru.ifmo.sd.world.configuration.GameConfigurationSerializable
-import ru.ifmo.sd.world.representation.Position
-import ru.ifmo.sd.world.representation.units.GameUnit
-import ru.ifmo.sd.world.representation.units.Player
 import java.awt.EventQueue
 
 
@@ -27,30 +19,29 @@ suspend fun main() {
             serializer = KotlinxSerializer()
         }
     }
-    val response = makeNewGameConfiguration()
+    val response = apiJoin()
 
-    println(response.deserializeBack())
+    println(response)
 
-    EventQueue.invokeLater { createAndShowGUI(response.deserializeBack()) }
-
-//    client.close()
+    EventQueue.invokeLater { createAndShowGUI(response) }
 }
 
-internal suspend fun makeNewGameConfiguration(): GameConfigurationSerializable {
-    return client!!.post("http://localhost:8080/start") {
+internal suspend fun apiJoin(): JoinGameInfo {
+    return client!!.post("http://localhost:8080/join") {
         contentType(ContentType.Application.Json)
-        body = LevelConfiguration(levelLength = 3, levelWidth = 3)
+        body = LevelConfiguration(length = 3, width = 3)
     }
 }
 
-internal suspend fun makeMove(newPos: Position, unit: GameUnit = Player(0)) {
-    client!!.post<String>("http://localhost:8080/move") {
+internal suspend fun apiMove(oldPos: Position, newPos: Position): GameMove {
+    println("apiMove oldPos=$oldPos, newPos=$newPos")
+    return client!!.post("http://localhost:8080/move") {
         contentType(ContentType.Application.Json)
-        body = MoveEventData(unit, newPos)
+        body = PlayerMove(oldPos, newPos)
     }
 }
 
-private fun createAndShowGUI(config: GameConfiguration) {
+private fun createAndShowGUI(config: JoinGameInfo) {
     val frame = GUI("Roguelike", config)
     frame.isVisible = true
 }

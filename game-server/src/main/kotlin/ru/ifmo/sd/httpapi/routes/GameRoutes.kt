@@ -14,7 +14,7 @@ fun Route.gameRouting() {
         post("/join") {
             val levelConfiguration = call.receive<LevelConfiguration>()
             val startedGame = EventsHandler.join(levelConfiguration)
-            call.respond(message = startedGame.makeSerializable(), status = HttpStatusCode.Created)
+            call.respond(message = startedGame, status = HttpStatusCode.Created)
         }
 
         post("/move") {

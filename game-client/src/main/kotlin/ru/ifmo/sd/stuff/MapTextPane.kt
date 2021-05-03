@@ -1,12 +1,10 @@
 package ru.ifmo.sd.stuff
 
-import ru.ifmo.sd.world.representation.Position
 import java.awt.Color
 import java.awt.Color.*
 import javax.swing.JTextPane
 import javax.swing.text.Style
 import javax.swing.text.StyleConstants
-import java.awt.Graphics;
 
 class MapTextPane : JTextPane() {
     private val FONT_FAMILY = "Monospaced"
