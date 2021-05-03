@@ -1,12 +1,14 @@
 package ru.ifmo.sd.world.npc.strategy
 
 import ru.ifmo.sd.httpapi.models.Position
-import ru.ifmo.sd.world.events.MazeEvent
+import ru.ifmo.sd.world.events.ChangeMazePositionEvent
 import ru.ifmo.sd.world.representation.units.Enemy
 
-
+/**
+ * Класс, отвечащий трусливой стратегии поведения NPC.
+ */
 class Coward : Strategy {
-    override fun execute(npcPos: Position, playerPos: Position): MutableSet<MazeEvent> {
+    override fun execute(npcPos: Position, playerPos: Position): MutableSet<ChangeMazePositionEvent> {
         return when (Strategy.findPlayer(npcPos, playerPos)) {
             Strategy.Companion.PlayerDirection.North -> {
                 val positionsToMove = listOf(
@@ -14,11 +16,11 @@ class Coward : Strategy {
                     Position(0, 1),
                     Position(0, -1)
                 )
-                val randomPos = Strategy.randomMove(positionsToMove)
+                val randomPos = Strategy.randomMove(npcPos, positionsToMove)
                 if (randomPos != Position(0, 0)) {
                     mutableSetOf(
-                        MazeEvent(npcPos, null),
-                        MazeEvent(npcPos + randomPos, Enemy())
+                        ChangeMazePositionEvent(npcPos, null),
+                        ChangeMazePositionEvent(npcPos + randomPos, Enemy())
                     )
                 } else {
                     HashSet()
@@ -30,11 +32,11 @@ class Coward : Strategy {
                     Position(0, 1),
                     Position(0, -1)
                 )
-                val randomPos = Strategy.randomMove(positionsToMove)
+                val randomPos = Strategy.randomMove(npcPos,positionsToMove)
                 if (randomPos != Position(0, 0)) {
                     mutableSetOf(
-                        MazeEvent(npcPos, null),
-                        MazeEvent(npcPos + randomPos, Enemy())
+                        ChangeMazePositionEvent(npcPos, null),
+                        ChangeMazePositionEvent(npcPos + randomPos, Enemy())
                     )
                 } else {
                     HashSet()
@@ -46,11 +48,11 @@ class Coward : Strategy {
                     Position(0, -1),
                     Position(-1, 0)
                 )
-                val randomPos = Strategy.randomMove(positionsToMove)
+                val randomPos = Strategy.randomMove(npcPos,positionsToMove)
                 if (randomPos != Position(0, 0)) {
                     mutableSetOf(
-                        MazeEvent(npcPos, null),
-                        MazeEvent(npcPos + randomPos, Enemy())
+                        ChangeMazePositionEvent(npcPos, null),
+                        ChangeMazePositionEvent(npcPos + randomPos, Enemy())
                     )
                 } else {
                     HashSet()
@@ -62,11 +64,11 @@ class Coward : Strategy {
                     Position(0, 1),
                     Position(1, 0)
                 )
-                val randomPos = Strategy.randomMove(positionsToMove)
+                val randomPos = Strategy.randomMove(npcPos,positionsToMove)
                 if (randomPos != Position(0, 0)) {
                     mutableSetOf(
-                        MazeEvent(npcPos, null),
-                        MazeEvent(npcPos + randomPos, Enemy())
+                        ChangeMazePositionEvent(npcPos, null),
+                        ChangeMazePositionEvent(npcPos + randomPos, Enemy())
                     )
                 } else {
                     HashSet()

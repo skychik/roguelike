@@ -1,11 +1,11 @@
 package ru.ifmo.sd.world.npc
 
 import ru.ifmo.sd.httpapi.models.Position
-import ru.ifmo.sd.world.events.MazeEvent
+import ru.ifmo.sd.world.events.ChangeMazePositionEvent
 import ru.ifmo.sd.world.npc.strategy.Strategy
 
 class Npc(var position: Position, private val strategy: Strategy) {
-    fun move(playerPos: Position): MutableSet<MazeEvent> {
+    fun move(playerPos: Position): MutableSet<ChangeMazePositionEvent> {
         return strategy.execute(position, playerPos)
     }
 }
@@ -13,7 +13,7 @@ class Npc(var position: Position, private val strategy: Strategy) {
 class NpcEventProvider {
     private val npc: MutableSet<Npc> = HashSet()
 
-    fun move(playerPos: Position): MutableSet<MazeEvent> {
+    fun move(playerPos: Position): MutableSet<ChangeMazePositionEvent> {
         return npc.random().move(playerPos)
     }
 

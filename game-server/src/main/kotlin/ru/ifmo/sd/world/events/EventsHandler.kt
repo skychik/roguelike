@@ -5,10 +5,20 @@ import ru.ifmo.sd.world.generation.LevelGenerator
 import ru.ifmo.sd.world.representation.GameLevel
 import ru.ifmo.sd.world.representation.units.*
 
+
+/**
+ * Класс, отвечающий за обработку игровых событий, приходящих с клиента.
+ */
 object EventsHandler {
     val interactionExecutor = InteractionExecutorImpl()
     var gameLevel: GameLevel? = null
 
+    /**
+     * Присоединяет нового игрока к текущей игровой сессии, если таковая есть, или создает новую.
+     *
+     * @param levelConfiguration -- конфигурация игрового уровня
+     * @return начальную информацию об игровом уровне
+     */
     fun join(levelConfiguration: LevelConfiguration): JoinGameInfo {
         if (gameLevel == null) {
             init(levelConfiguration.length, levelConfiguration.width)
@@ -34,9 +44,17 @@ object EventsHandler {
         gameLevel = LevelGenerator.generateLevel(length, width)
     }
 
+    /**
+     * Выполняет игровое действие игрока на заданной позиции
+     * по отношению к игровому объекту на заданной позиции.
+     *
+     * @param playerPos -- позиция игрока
+     * @param targetPos -- позиция игрового объекта
+     * @return данные об изменениях после игрового хода
+     */
     fun move(playerPos: Position, targetPos: Position): GameMove {
         val maze = gameLevel!!.maze
-        return if (maze[targetPos] != null) {
+        return if (maze[targetPos] == null) {
             // ход игрока
             maze[playerPos] = null
             maze[targetPos] = Player()

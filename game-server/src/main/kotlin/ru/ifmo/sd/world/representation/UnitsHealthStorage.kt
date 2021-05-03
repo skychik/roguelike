@@ -2,6 +2,10 @@ package ru.ifmo.sd.world.representation
 
 import ru.ifmo.sd.httpapi.models.Position
 
+
+/**
+ * Хранилище информации о жизненных силах персонажа и NPC.
+ */
 class UnitsHealthStorage {
     private val healths: MutableMap<Position, Int> = HashMap()
 
