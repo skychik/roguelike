@@ -11,5 +11,5 @@ data class MazeData(
 data class JoinGameInfo(
     val playerPos: Position,
     val maze: MazeData,
-    val unitsHealth: Map<Position, Int>
+    val unitsHealth: List<Pair<Position, Int>>
 )

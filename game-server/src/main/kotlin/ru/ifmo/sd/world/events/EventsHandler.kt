@@ -5,6 +5,7 @@ import ru.ifmo.sd.world.generation.LevelGenerator
 import ru.ifmo.sd.world.representation.GameLevel
 import ru.ifmo.sd.world.representation.units.MazeObject
 import ru.ifmo.sd.world.representation.units.Player
+import java.util.stream.Collectors
 
 
 /**
@@ -32,7 +33,8 @@ object EventsHandler {
 
         return JoinGameInfo(
             playerPos, MazeData(getMazeData()),
-            gameLevel!!.unitsHealthStorage.getHealths()
+            gameLevel!!.unitsHealthStorage.getHealths().entries.stream().map { e -> Pair(e.key, e.value) }
+                .collect(Collectors.toList())
         )
     }
 
