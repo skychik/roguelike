@@ -22,6 +22,11 @@ fun Route.gameRouting() {
             val move = EventsHandler.move(playerMove.oldPosition, playerMove.newPosition, EventsHandler.gameLevel!!)
             call.respond(message = move, status = HttpStatusCode.Accepted)
         }
+
+        get("/restart") {
+            EventsHandler.restartGame()
+            call.respond( HttpStatusCode.Accepted, "Game was successfully restarted")
+        }
     }
 }
 

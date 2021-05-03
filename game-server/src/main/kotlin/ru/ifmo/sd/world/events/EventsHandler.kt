@@ -54,6 +54,10 @@ object EventsHandler {
         gameLevel = LevelGenerator.generateLevel(length, width)
     }
 
+    fun restartGame() {
+        gameLevel = null
+    }
+
     /**
      * Выполняет игровое действие игрока на заданной позиции
      * по отношению к игровому объекту на заданной позиции.
@@ -63,45 +67,54 @@ object EventsHandler {
      * @return данные об изменениях после игрового хода
      */
     fun move(playerPos: Position, targetPos: Position, gameLevel: GameLevel): GameMove {
-        val maze = gameLevel.maze
-        return if (maze[targetPos] == null) {
-            // ход игрока
-            maze[playerPos] = null
-            maze[targetPos] = Player()
-
-            // результат хода игрового мира
-            val npcMove = gameLevel.npcEventProvider.move(targetPos, maze)
-            npcMove.forEach { maze[it.position] = it.newMazeObj }
-            val newPlayerPos =
-                if (maze[targetPos] != null) targetPos
-                else Position(-1, -1)
-
-            GameMove(newPlayerPos, npcMove.map {
-                MazeEventData(
-                    it.position,
-                    it.newMazeObj?.getTypeIdentifier() ?: 0
-                )
-            })
+        return if (gameLevel.maze[targetPos] == null) {
+            moveToFreePos(playerPos, targetPos, gameLevel)
         } else {
-            // результат хода игрока
-            val playerMove = maze[targetPos]!!.interact(interactionExecutor, targetPos)
-            playerMove.forEach { maze[it.position] = it.newMazeObj }
-
-            // результат хода игрового мира
-            val npcMove = gameLevel.npcEventProvider.move(playerPos, maze)
-            npcMove.forEach { maze[it.position] = it.newMazeObj }
-            val newPlayerPos =
-                if (maze[playerPos] != null) playerPos
-                else Position(-1, -1)
-
-            playerMove.forEach { npcMove.add(it) }
-
-            GameMove(newPlayerPos, npcMove.map {
-                MazeEventData(
-                    it.position,
-                    it.newMazeObj?.getTypeIdentifier() ?: 0
-                )
-            })
+            moveToOccupied(playerPos, targetPos, gameLevel)
         }
+    }
+
+    private fun moveToFreePos(playerPos: Position, targetPos: Position, gameLevel: GameLevel): GameMove {
+        val maze = gameLevel.maze
+        // ход игрока
+        maze[playerPos] = null
+        maze[targetPos] = Player()
+
+        // результат хода игрового мира
+        val npcMove = gameLevel.npcEventProvider.move(targetPos, maze)
+        npcMove.forEach { maze[it.position] = it.newMazeObj }
+        val newPlayerPos =
+            if (maze[targetPos] != null) targetPos
+            else Position(-1, -1)
+
+        return GameMove(newPlayerPos, npcMove.map {
+            MazeEventData(
+                it.position,
+                it.newMazeObj?.getTypeIdentifier() ?: 0
+            )
+        })
+    }
+
+    private fun moveToOccupied(playerPos: Position, targetPos: Position, gameLevel: GameLevel): GameMove {
+        val maze = gameLevel.maze
+        // результат хода игрока
+        val playerMove = maze[targetPos]!!.interact(interactionExecutor, targetPos)
+        playerMove.forEach { maze[it.position] = it.newMazeObj }
+
+        // результат хода игрового мира
+        val npcMove = gameLevel.npcEventProvider.move(playerPos, maze)
+        npcMove.forEach { maze[it.position] = it.newMazeObj }
+        val newPlayerPos =
+            if (maze[playerPos] != null) playerPos
+            else Position(-1, -1)
+
+        playerMove.forEach { npcMove.add(it) }
+
+        return GameMove(newPlayerPos, npcMove.map {
+            MazeEventData(
+                it.position,
+                it.newMazeObj?.getTypeIdentifier() ?: 0
+            )
+        })
     }
 }
