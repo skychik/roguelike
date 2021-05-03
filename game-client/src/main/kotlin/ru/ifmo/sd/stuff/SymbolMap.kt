@@ -36,7 +36,7 @@ class SymbolMap(config: JoinGameInfo) {
     }
 
     internal fun applyDiff(events: List<MazeEventData>) {
-        events.forEach { e ->
+        for (e in events) {
             val pos = e.position
             rows[pos.row][pos.column] = mazeObjToSymbol(e.newMazeObj)
         }

@@ -10,6 +10,7 @@ import ru.ifmo.sd.stuff.ColoredSymbol.*
 import java.awt.BorderLayout
 import java.awt.Color.*
 import java.awt.Container
+import java.awt.SystemColor.infoText
 import java.awt.event.KeyEvent
 import java.awt.event.KeyEvent.*
 import java.awt.event.KeyListener
@@ -29,10 +30,12 @@ class GUI(title: String, gameConfiguration: JoinGameInfo) : JFrame(), KeyListene
             prevPos = currPos
             field = value
         }
+    private var isDead = false
     private val mainPanel = JPanel()
     private val headerPanel = JPanel()
     private val mapPanel = JPanel()
     private val infoPanel = JPanel()
+    private val infoLabel = JLabel("")
     private var map = SymbolMap(gameConfiguration)
     private var mapTextPane = MapTextPane()
 
@@ -88,9 +91,8 @@ class GUI(title: String, gameConfiguration: JoinGameInfo) : JFrame(), KeyListene
 
         headerPanel.setSize(800, 50)
         mainPanel.add(headerPanel, BorderLayout.NORTH)
-//        val infoLabel = JLabel("loading...")
-//        infoLabel.isFocusable = false
-//        headerPanel.add(infoLabel)
+        headerPanel.add(infoLabel)
+
 
         mapPanel.setSize(550, 550)
         mainPanel.add(mapPanel, BorderLayout.WEST)
@@ -101,7 +103,6 @@ class GUI(title: String, gameConfiguration: JoinGameInfo) : JFrame(), KeyListene
         mainPanel.add(infoPanel, BorderLayout.EAST)
 
 //        val hpLabel = JLabel("HP: ")
-//        hpLabel.isFocusable = false
 //        infoPanel.add(hpLabel, BorderLayout.WEST)
     }
 
@@ -152,18 +153,20 @@ class GUI(title: String, gameConfiguration: JoinGameInfo) : JFrame(), KeyListene
     override fun keyReleased(e: KeyEvent?) {}
     override fun keyTyped(e: KeyEvent?) {}
     override fun keyPressed(e: KeyEvent?) {
+        if (isDead) return
         if (e != null) {
             println("Some key pressed, current=$moved, keyCode=${e.keyCode}, didMove=$didMove, currPos=$currPos")
         } else {
             println("e == null")
         }
         if (!didMove) {
+            var newPos = currPos
             when (e?.keyCode) {
                 null -> {
                     moved = MoveEvent.NONE
                 }
                 VK_UP, VK_W -> {
-                    val newPos = Position(currPos.row - 1, currPos.column)
+                    newPos = Position(currPos.row - 1, currPos.column)
                     if (checkMoveIsValid(currPos, newPos)) {
                         didMove = true
                         moved = MoveEvent.UP
@@ -171,7 +174,7 @@ class GUI(title: String, gameConfiguration: JoinGameInfo) : JFrame(), KeyListene
                     }
                 }
                 VK_DOWN, VK_S -> {
-                    val newPos = Position(currPos.row + 1, currPos.column)
+                    newPos = Position(currPos.row + 1, currPos.column)
                     if (checkMoveIsValid(currPos, newPos)) {
                         didMove = true
                         moved = MoveEvent.DOWN
@@ -179,7 +182,7 @@ class GUI(title: String, gameConfiguration: JoinGameInfo) : JFrame(), KeyListene
                     }
                 }
                 VK_LEFT, VK_A -> {
-                    val newPos = Position(currPos.row, currPos.column - 1)
+                    newPos = Position(currPos.row, currPos.column - 1)
                     if (checkMoveIsValid(currPos, newPos)) {
                         didMove = true
                         moved = MoveEvent.LEFT
@@ -187,7 +190,7 @@ class GUI(title: String, gameConfiguration: JoinGameInfo) : JFrame(), KeyListene
                     }
                 }
                 VK_RIGHT, VK_D -> {
-                    val newPos = Position(currPos.row, currPos.column + 1)
+                    newPos = Position(currPos.row, currPos.column + 1)
                     if (checkMoveIsValid(currPos, newPos)) {
                         didMove = true
                         moved = MoveEvent.RIGHT
@@ -208,28 +211,33 @@ class GUI(title: String, gameConfiguration: JoinGameInfo) : JFrame(), KeyListene
                 this.mapTextPane.repaint()
 
                 runBlocking {
-                    if (currPos.row == map.rowSize - 1 && currPos.column == map.columnSize - 2) {
-                        // level ended
-                        val newConfig = apiJoin()
-                        map = SymbolMap(newConfig)
-                        reloadMapTextPane()
-                        val prevPosSaved = prevPos
-                        currPos = newConfig.playerPos
-                        prevPos = prevPosSaved
-                    } else {
+//                    if (currPos.row == map.rowSize - 1 && currPos.column == map.columnSize - 2) {
+//                        // level ended
+//                        val newConfig = apiJoin()
+//                        map = SymbolMap(newConfig)
+////                        replaceSymbol(currPos, newPos)
+//                        val prevPosSaved = prevPos
+//                        currPos = newConfig.playerPos
+//                        prevPos = prevPosSaved
+//                        reloadMapTextPane()
+//                    } else {
                         val gameMove = apiMove(prevPos!!, currPos)
+                        println("gameMove=$gameMove")
                         if (gameMove.playerPosition == Position(-1, -1)) {
                             // player is dead
-                            println("You are dead!")
+                            isDead = true
+                            infoLabel.text = "You are dead!"
+                            replacePaneSymbol(prevPos!!, NONE)
                         } else {
                             // player moved
+                            replaceSymbol(prevPos!!, gameMove.playerPosition)
                             map.applyDiff(gameMove.events)
-                            reloadMapTextPane()
                             val prevPosSaved = prevPos
                             currPos = gameMove.playerPosition
                             prevPos = prevPosSaved
+                            reloadMapTextPane()
                         }
-                    }
+//                    }
                 }
             }
         }
@@ -241,25 +249,25 @@ class GUI(title: String, gameConfiguration: JoinGameInfo) : JFrame(), KeyListene
                 (map.rows[newPos.row][newPos.column] == NONE || map.rows[newPos.row][newPos.column] == ENEMY)
     }
 
-//    private fun replaceSymbol(oldPos: Position, newPos: Position, replaceSymb: ColoredSymbol = NONE): Boolean {
-//        if (checkMoveIsValid(oldPos, newPos)) {
-//            val oldSymb = map.rows[oldPos.row][oldPos.column]
-//            map.rows[oldPos.row][oldPos.column] = replaceSymb
-//            map.rows[newPos.row][newPos.column] = oldSymb
-//            replacePaneSymbol(oldPos, replaceSymb)
-//            replacePaneSymbol(newPos, oldSymb)
-//            return true
-//        }
-//        return false
-//    }
-//
-//    private fun replacePaneSymbol(pos: Position, symbol: ColoredSymbol) {
-//        mapTextPane.isEditable = true
-//        val index = pos.row * (map.columnSize + 1) + pos.column
-//        mapTextPane.select(index, index + 1)
-////        println("selected text='${mapTextPane.selectedText}'")
-//        mapTextPane.selectionColor = symbol.color
-//        mapTextPane.replaceSelection(symbol.char.toString())
-//        mapTextPane.isEditable = false
-//    }
+    private fun replaceSymbol(oldPos: Position, newPos: Position, replaceSymb: ColoredSymbol = NONE): Boolean {
+        if (checkMoveIsValid(oldPos, newPos)) {
+            val oldSymb = map.rows[oldPos.row][oldPos.column]
+            map.rows[oldPos.row][oldPos.column] = replaceSymb
+            map.rows[newPos.row][newPos.column] = oldSymb
+            replacePaneSymbol(oldPos, replaceSymb)
+            replacePaneSymbol(newPos, oldSymb)
+            return true
+        }
+        return false
+    }
+
+    private fun replacePaneSymbol(pos: Position, symbol: ColoredSymbol) {
+        mapTextPane.isEditable = true
+        val index = pos.row * (map.columnSize + 1) + pos.column
+        mapTextPane.select(index, index + 1)
+//        println("selected text='${mapTextPane.selectedText}'")
+        mapTextPane.selectionColor = symbol.color
+        mapTextPane.replaceSelection(symbol.char.toString())
+        mapTextPane.isEditable = false
+    }
 }
