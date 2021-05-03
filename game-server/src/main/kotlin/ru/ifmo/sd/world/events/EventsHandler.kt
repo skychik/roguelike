@@ -3,7 +3,8 @@ package ru.ifmo.sd.world.events
 import ru.ifmo.sd.httpapi.models.*
 import ru.ifmo.sd.world.generation.LevelGenerator
 import ru.ifmo.sd.world.representation.GameLevel
-import ru.ifmo.sd.world.representation.units.*
+import ru.ifmo.sd.world.representation.units.MazeObject
+import ru.ifmo.sd.world.representation.units.Player
 
 
 /**
@@ -23,21 +24,28 @@ object EventsHandler {
         if (gameLevel == null) {
             init(levelConfiguration.length, levelConfiguration.width)
         }
-        val playerPos = gameLevel!!.maze.freePos.random()
-        gameLevel!!.unitsHealthStorage.addUnit(playerPos)
-        gameLevel!!.maze[playerPos] = Player()
 
-        val length = gameLevel!!.maze.levelMaze.size
-        val width = gameLevel!!.maze.levelMaze[0].size
-        val mazeData: Array<Array<Int>> = Array(length) { Array(width) { 0 } }
-        for (i in 0 until length) {
-            for (j in 0 until width) {
-                val mazeObj: MazeObject? = gameLevel!!.maze[Position(i, j)]
+        val maze = gameLevel!!.maze
+        val playerPos = maze.freePos.random()
+        gameLevel!!.unitsHealthStorage.addUnit(playerPos)
+        maze[playerPos] = Player()
+
+        return JoinGameInfo(
+            playerPos, MazeData(getMazeData()),
+            gameLevel!!.unitsHealthStorage.getHealths()
+        )
+    }
+
+    private fun getMazeData(): Array<Array<Int>> {
+        val maze = gameLevel!!.maze
+        val mazeData: Array<Array<Int>> = Array(maze.levelMaze.size) { Array(maze.levelMaze[0].size) { 0 } }
+        for (i in mazeData.indices) {
+            for (j in mazeData[0].indices) {
+                val mazeObj: MazeObject? = maze[Position(i, j)]
                 mazeData[i][j] = mazeObj?.getTypeIdentifier() ?: 0
             }
         }
-
-        return JoinGameInfo(playerPos, MazeData(mazeData))
+        return mazeData
     }
 
     private fun init(length: Int, width: Int) {
@@ -52,15 +60,15 @@ object EventsHandler {
      * @param targetPos -- позиция игрового объекта
      * @return данные об изменениях после игрового хода
      */
-    fun move(playerPos: Position, targetPos: Position): GameMove {
-        val maze = gameLevel!!.maze
+    fun move(playerPos: Position, targetPos: Position, gameLevel: GameLevel): GameMove {
+        val maze = gameLevel.maze
         return if (maze[targetPos] == null) {
             // ход игрока
             maze[playerPos] = null
             maze[targetPos] = Player()
 
             // результат хода игрового мира
-            val npcMove = gameLevel!!.npcEventProvider.move(targetPos)
+            val npcMove = gameLevel.npcEventProvider.move(targetPos, maze)
             npcMove.forEach { maze[it.position] = it.newMazeObj }
             val newPlayerPos =
                 if (maze[targetPos] != null) targetPos
@@ -78,7 +86,7 @@ object EventsHandler {
             playerMove.forEach { maze[it.position] = it.newMazeObj }
 
             // результат хода игрового мира
-            val npcMove = gameLevel!!.npcEventProvider.move(playerPos)
+            val npcMove = gameLevel.npcEventProvider.move(playerPos, maze)
             npcMove.forEach { maze[it.position] = it.newMazeObj }
             val newPlayerPos =
                 if (maze[playerPos] != null) playerPos

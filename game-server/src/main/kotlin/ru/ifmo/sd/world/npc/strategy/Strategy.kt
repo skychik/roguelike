@@ -2,8 +2,10 @@ package ru.ifmo.sd.world.npc.strategy
 
 import ru.ifmo.sd.httpapi.models.Position
 import ru.ifmo.sd.world.events.ChangeMazePositionEvent
+import ru.ifmo.sd.world.npc.Npc
 import ru.ifmo.sd.world.npc.strategy.Strategy.Companion.PlayerDirection.Failed
 import ru.ifmo.sd.world.representation.Maze
+import ru.ifmo.sd.world.representation.units.EnemyFactory
 import kotlin.math.abs
 
 /**
@@ -11,14 +13,21 @@ import kotlin.math.abs
  */
 interface Strategy {
     /**
+     * Возвращает фабрику объектов лабиринта, соответствующих противникам с данной стратегией поведения.
+     *
+     * @return фабрика противников
+     */
+    fun getEnemyFactory(): EnemyFactory
+
+    /**
      * Выполняет действие NPC на заданной позиции по отношению к игроку на заданной позиции.
      *
-     * @param npcPos -- позиция NPC
+     * @param npc-- NPC, выполняющий действие
      * @param playerPos -- позиция игрока
      * @param maze -- игровой лабиринт
      * @return множество событий изменения лабиринта
      */
-    fun execute(npcPos: Position, playerPos: Position, maze: Maze): MutableSet<ChangeMazePositionEvent>
+    fun execute(npc: Npc, playerPos: Position, maze: Maze): MutableSet<ChangeMazePositionEvent>
 
     companion object {
         enum class PlayerDirection {
@@ -90,19 +99,18 @@ interface Strategy {
          * Выбирает случайное перемещении NPC на заданной позиции.
          *
          * @param npcPos -- позиция NPC
-         * @param positionsToChoose -- список позиций для выбора
+         * @param directions -- список позиций для выбора
          * @param maze -- игровой лабиринт
          * @return выбранное перемещение NPC или нулевое перемещение, если доступных перемещений нет
          */
-        fun randomMove(npcPos: Position, positionsToChoose: List<Position>, maze: Maze): Position {
+        fun randomDirection(npcPos: Position, directions: List<Position>, maze: Maze): Position {
             val mazeLength = maze.levelMaze.size
             val mazeWidth = maze.levelMaze[0].size
-            val availablePos = positionsToChoose.filter {
+            val availablePos = directions.filter {
                 val newNpcPos = npcPos + it
                 (newNpcPos.row in 1..mazeLength - 2
                     && newNpcPos.column in 1..mazeWidth - 2
                     && maze[newNpcPos] == null)
-
             }
             return if (availablePos.isNotEmpty()) availablePos.random() else Position(0, 0)
         }

@@ -19,7 +19,7 @@ fun Route.gameRouting() {
 
         post("/move") {
             val playerMove = call.receive<PlayerMove>()
-            val move = EventsHandler.move(playerMove.oldPosition, playerMove.newPosition)
+            val move = EventsHandler.move(playerMove.oldPosition, playerMove.newPosition, EventsHandler.gameLevel!!)
             call.respond(message = move, status = HttpStatusCode.Accepted)
         }
     }

@@ -10,5 +10,6 @@ data class MazeData(
 @Serializable
 data class JoinGameInfo(
     val playerPos: Position,
-    val maze: MazeData
+    val maze: MazeData,
+    val unitsHealth: Map<Position, Int>
 )

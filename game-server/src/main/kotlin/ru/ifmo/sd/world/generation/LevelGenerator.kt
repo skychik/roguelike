@@ -6,6 +6,7 @@ import ru.ifmo.sd.world.npc.strategy.*
 import ru.ifmo.sd.world.representation.*
 import ru.ifmo.sd.world.representation.units.Enemy
 import ru.ifmo.sd.world.representation.units.Wall
+import kotlin.properties.Delegates
 import kotlin.random.Random
 
 /**
@@ -14,7 +15,7 @@ import kotlin.random.Random
  */
 class LevelGenerator {
     companion object {
-        private const val GAME_DIFFICULTY = 0.1
+        private var gameDifficulty by Delegates.notNull<Float>()
         private lateinit var level: Array<IntArray>
         private lateinit var freePos: MutableList<Position>
 
@@ -25,7 +26,8 @@ class LevelGenerator {
          * @param width -- ширина лабиринта
          * @return двумерный массив соответствующий игровому лабиринту
          */
-        fun generateLevel(length: Int = 10, width: Int = 10): GameLevel {
+        fun generateLevel(length: Int = 10, width: Int = 10, difficulty: Float = 0.1F): GameLevel {
+            gameDifficulty = difficulty
             /*
             Шаг смещения позиции при создании лабиринта определим равным 2.
             Создаем лабиринт с нечетными размерностями, чтобы поддерживать
@@ -130,16 +132,17 @@ class LevelGenerator {
         }
 
         private fun placeEnemies(maze: Maze, healths: UnitsHealthStorage, npc: NpcEventProvider) {
-            val countOfEnemies = (maze.size() * GAME_DIFFICULTY).toInt()
+            val countOfEnemies = (maze.size() * gameDifficulty).toInt()
             freePos.forEach { maze.freePos.add(it) }
             val enemiesPositions = freePos
                 .shuffled()
                 .take(countOfEnemies)
             val strategies = listOf(Passive(), Aggressive(), Coward())
             enemiesPositions.forEach {
-                maze[it] = Enemy()
+                val chosenStrategy = strategies.random()
+                maze[it] = chosenStrategy.getEnemyFactory().getEnemy()
                 healths.addUnit(it, 100)
-                npc.addNpc(it, strategies.random())
+                npc.addNpc(it, chosenStrategy)
             }
         }
     }
