@@ -5,6 +5,7 @@ import ru.ifmo.sd.world.npc.NpcEventProvider
 import ru.ifmo.sd.world.npc.strategy.*
 import ru.ifmo.sd.world.representation.*
 import ru.ifmo.sd.world.representation.units.Enemy
+import ru.ifmo.sd.world.representation.units.Wall
 import kotlin.random.Random
 
 /**
@@ -59,10 +60,19 @@ class LevelGenerator {
                     null
                 }
             }, HashSet())
+            fillMaze(maze)
             val unitsHealths = UnitsHealthStorage()
             val npc = NpcEventProvider()
             placeEnemies(maze, unitsHealths, npc)
             return GameLevel(maze, unitsHealths, npc)
+        }
+
+        private fun fillMaze(maze: Maze) {
+            for (i in level.indices) {
+                for (j in level[0].indices) {
+                    if (level[i][j] == 1) maze[Position(i, j)] = Wall()
+                }
+            }
         }
 
         // Идея в том, чтобы пробуривать соседние занятые клетки и избегать при этом циклов.

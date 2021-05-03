@@ -3,6 +3,7 @@ package ru.ifmo.sd.world.npc.strategy
 import ru.ifmo.sd.httpapi.models.Position
 import ru.ifmo.sd.world.events.EventsHandler
 import ru.ifmo.sd.world.events.ChangeMazePositionEvent
+import ru.ifmo.sd.world.representation.Maze
 import ru.ifmo.sd.world.representation.units.Enemy
 import kotlin.math.abs
 
@@ -16,9 +17,9 @@ class Aggressive : Strategy {
             || abs(npcPos.row - playerPos.row) == 0 && abs(npcPos.column - playerPos.column) == 1
     }
 
-    override fun execute(npcPos: Position, playerPos: Position): MutableSet<ChangeMazePositionEvent> {
+    override fun execute(npcPos: Position, playerPos: Position, maze: Maze): MutableSet<ChangeMazePositionEvent> {
         val player = EventsHandler.gameLevel!!.maze[playerPos]!!
-        return when (Strategy.findPlayer(npcPos, playerPos)) {
+        return when (Strategy.findPlayer(npcPos, playerPos, maze)) {
             Strategy.Companion.PlayerDirection.North ->
                 if (isAdjacent(npcPos, playerPos)) {
                     player.interact(EventsHandler.interactionExecutor, playerPos)
