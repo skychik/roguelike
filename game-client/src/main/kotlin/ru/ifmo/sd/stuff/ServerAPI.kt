@@ -8,13 +8,24 @@ import ru.ifmo.sd.httpapi.models.*
 
 object ServerAPI {
     const val address = "http://localhost:8080"
+    private var mapSize = Pair(4, 4)
+
+    internal fun increaseMapSize() {
+        if (mapSize.first < 9) {
+            mapSize = Pair(mapSize.first + 1, mapSize.second + 2)
+        }
+    }
+
+    internal fun resetMapSize() {
+        mapSize = Pair(4, 4)
+    }
 
     internal fun join(): JoinGameInfo {
         return runBlocking {
             println("apiJoin")
             return@runBlocking client!!.post<JoinGameInfo>("$address/join") {
                 contentType(ContentType.Application.Json)
-                body = LevelConfiguration(length = 4, width = 4)
+                body = LevelConfiguration(length = mapSize.first, width = mapSize.second)
             }
         }
     }

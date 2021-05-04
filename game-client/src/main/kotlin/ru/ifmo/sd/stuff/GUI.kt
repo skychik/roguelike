@@ -45,6 +45,7 @@ class GUI(title: String, gameConfiguration: JoinGameInfo) : JFrame(), KeyListene
         setTitle(title)
 
         createLayout()
+        createMenuBar()
         makeNotFocusable()
 
         defaultCloseOperation = EXIT_ON_CLOSE
@@ -101,6 +102,23 @@ class GUI(title: String, gameConfiguration: JoinGameInfo) : JFrame(), KeyListene
 
 //        val hpLabel = JLabel("HP: ")
 //        infoPanel.add(hpLabel, BorderLayout.WEST)
+    }
+
+    private fun createMenuBar() {
+        val menubar = JMenuBar()
+
+        val file = JMenu("Menu")
+//        file.mnemonic = KeyEvent.VK_ESCAPE
+
+        val eMenuItem = JMenuItem("Restart")
+//        eMenuItem.mnemonic = KeyEvent.VK_R
+        eMenuItem.toolTipText = "Restart game"
+        eMenuItem.addActionListener { remakeMap(restart = true) }
+
+        file.add(eMenuItem)
+        menubar.add(file)
+
+        jMenuBar = menubar
     }
 
     private fun makeNotFocusable(container: Container = this) {
@@ -224,6 +242,7 @@ class GUI(title: String, gameConfiguration: JoinGameInfo) : JFrame(), KeyListene
                         replaceSymbol(prevPos!!, gameMove.playerPosition)
                         map.applyDiff(gameMove.events)
                         if (map.enemyAmount == 0) {
+                            ServerAPI.increaseMapSize()
                             remakeMap()
                         } else {
                             // reload pane
@@ -238,8 +257,11 @@ class GUI(title: String, gameConfiguration: JoinGameInfo) : JFrame(), KeyListene
         }
     }
 
-    private fun remakeMap() {
+    private fun remakeMap(restart: Boolean = false) {
         ServerAPI.restart() // may break previous player's progress
+        if (restart) {
+            ServerAPI.resetMapSize()
+        }
         val newConfig = ServerAPI.join()
         map = SymbolMap(newConfig)
         val prevPosSaved = prevPos

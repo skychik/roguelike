@@ -12,7 +12,7 @@ enum class ColoredSymbol(val char: Char, val color: Color = BLACK) {
     PLAYER(0x2689.toChar()/*, RED*/),
     PASSIVE_ENEMY(0x2640.toChar()),
     AGGRESSIVE_ENEMY(0x263F.toChar()),
-    COWARD_ENEMY(0x26B2.toChar()),
+    COWARD_ENEMY(0x2649.toChar()),
     NONE(' '),
 }
 

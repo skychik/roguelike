@@ -12,7 +12,7 @@ import java.awt.EventQueue
 
 internal var client: HttpClient? = null
 
-suspend fun main() {
+fun main() {
     client = HttpClient(CIO) {
         install(JsonFeature) {
             serializer = KotlinxSerializer()
