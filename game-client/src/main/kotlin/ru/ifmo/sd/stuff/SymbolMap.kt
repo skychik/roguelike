@@ -9,8 +9,10 @@ import java.awt.Color.*
 
 enum class ColoredSymbol(val char: Char, val color: Color = BLACK) {
     WALL(0x2591.toChar(), GRAY),
-    PLAYER(0x267F.toChar()/*, RED*/),
-    ENEMY(0x2639.toChar()),
+    PLAYER(0x2689.toChar()/*, RED*/),
+    PASSIVE_ENEMY(0x2640.toChar()),
+    AGGRESSIVE_ENEMY(0x263F.toChar()),
+    COWARD_ENEMY(0x26B2.toChar()),
     NONE(' '),
 }
 
@@ -18,27 +20,40 @@ class SymbolMap(config: JoinGameInfo) {
     val rows: List<MutableList<ColoredSymbol>> = config.maze.levelMaze.map { arr ->
         arr.map { i -> mazeObjToSymbol(i) }.toMutableList()
     }
+    val rowSize: Int
+        get() = rows.size
+    val columnSize: Int
+        get() = rows[0].size
+    var enemyAmount = config.maze.levelMaze.sumBy { arr -> arr.sumBy { i -> if (isEnemy(i)) 1 else 0 } }
+        private set
 
     init {
         rows[config.playerPos.row][config.playerPos.column] = PLAYER
     }
 
-    val rowSize: Int
-        get() = rows.size
-    val columnSize: Int
-        get() = rows[0].size
-
     private fun mazeObjToSymbol(mazeObj: Int): ColoredSymbol = when (mazeObj) {
+        0 -> NONE
         1 -> WALL
         2 -> PLAYER
-        3 -> ENEMY
-        else -> NONE
+        3 -> PASSIVE_ENEMY
+        4 -> AGGRESSIVE_ENEMY
+        5 -> COWARD_ENEMY
+        else -> throw IllegalArgumentException("No such index in maze: $mazeObj")
     }
 
     internal fun applyDiff(events: List<MazeEventData>) {
         for (e in events) {
             val pos = e.position
+
+            val wasEnemy = isEnemy(rows[pos.row][pos.column])
+            val willBeEnemy = isEnemy(e.newMazeObj)
+            if (wasEnemy && !willBeEnemy) enemyAmount -= 1
+            if (!wasEnemy && willBeEnemy) enemyAmount += 1
+
             rows[pos.row][pos.column] = mazeObjToSymbol(e.newMazeObj)
         }
     }
+
+    private fun isEnemy(i: Int): Boolean = i == 3 || i == 4 || i == 5
+    private fun isEnemy(i: ColoredSymbol): Boolean = i == PASSIVE_ENEMY || i == AGGRESSIVE_ENEMY || i == COWARD_ENEMY
 }

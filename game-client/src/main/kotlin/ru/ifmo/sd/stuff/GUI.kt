@@ -4,13 +4,10 @@ import kotlinx.coroutines.runBlocking
 import ru.ifmo.sd.client
 import ru.ifmo.sd.httpapi.models.JoinGameInfo
 import ru.ifmo.sd.httpapi.models.Position
-import ru.ifmo.sd.apiMove
-import ru.ifmo.sd.apiJoin
 import ru.ifmo.sd.stuff.ColoredSymbol.*
 import java.awt.BorderLayout
 import java.awt.Color.*
 import java.awt.Container
-import java.awt.SystemColor.infoText
 import java.awt.event.KeyEvent
 import java.awt.event.KeyEvent.*
 import java.awt.event.KeyListener
@@ -210,43 +207,51 @@ class GUI(title: String, gameConfiguration: JoinGameInfo) : JFrame(), KeyListene
                 this.mapPanel.repaint()
                 this.mapTextPane.repaint()
 
-                runBlocking {
-//                    if (currPos.row == map.rowSize - 1 && currPos.column == map.columnSize - 2) {
-//                        // level ended
-//                        val newConfig = apiJoin()
-//                        map = SymbolMap(newConfig)
-////                        replaceSymbol(currPos, newPos)
-//                        val prevPosSaved = prevPos
-//                        currPos = newConfig.playerPos
-//                        prevPos = prevPosSaved
-//                        reloadMapTextPane()
-//                    } else {
-                        val gameMove = apiMove(prevPos!!, currPos)
-                        println("gameMove=$gameMove")
-                        if (gameMove.playerPosition == Position(-1, -1)) {
-                            // player is dead
-                            isDead = true
-                            infoLabel.text = "You are dead!"
-                            replacePaneSymbol(prevPos!!, NONE)
+                if ((currPos.row == map.rowSize - 1 && currPos.column == map.columnSize - 2) ||
+                    (currPos.row == 0 && currPos.column == 1)) {
+                    // stepped away from the level
+                    remakeMap()
+                } else {
+                    val gameMove = ServerAPI.move(prevPos!!, currPos)
+                    println("gameMove=$gameMove")
+                    if (gameMove.playerPosition == Position(-1, -1)) {
+                        // player is dead
+                        isDead = true
+                        infoLabel.text = "You are dead!"
+                        replacePaneSymbol(prevPos!!, NONE)
+                    } else {
+                        // player moved
+                        replaceSymbol(prevPos!!, gameMove.playerPosition)
+                        map.applyDiff(gameMove.events)
+                        if (map.enemyAmount == 0) {
+                            remakeMap()
                         } else {
-                            // player moved
-                            replaceSymbol(prevPos!!, gameMove.playerPosition)
-                            map.applyDiff(gameMove.events)
+                            // reload pane
                             val prevPosSaved = prevPos
                             currPos = gameMove.playerPosition
                             prevPos = prevPosSaved
                             reloadMapTextPane()
                         }
-//                    }
+                    }
                 }
             }
         }
     }
 
+    private fun remakeMap() {
+        ServerAPI.restart() // may break previous player's progress
+        val newConfig = ServerAPI.join()
+        map = SymbolMap(newConfig)
+        val prevPosSaved = prevPos
+        currPos = newConfig.playerPos
+        prevPos = prevPosSaved
+        reloadMapTextPane()
+    }
+
     private fun checkMoveIsValid(oldPos: Position, newPos: Position): Boolean {
         return newPos.row < map.rowSize && newPos.row >= 0 &&
                 newPos.column < map.columnSize && newPos.column >= 0 &&
-                (map.rows[newPos.row][newPos.column] == NONE || map.rows[newPos.row][newPos.column] == ENEMY)
+                map.rows[newPos.row][newPos.column] != WALL && map.rows[newPos.row][newPos.column] != PLAYER
     }
 
     private fun replaceSymbol(oldPos: Position, newPos: Position, replaceSymb: ColoredSymbol = NONE): Boolean {
