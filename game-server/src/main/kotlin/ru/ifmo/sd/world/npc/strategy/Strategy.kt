@@ -3,10 +3,11 @@ package ru.ifmo.sd.world.npc.strategy
 import ru.ifmo.sd.httpapi.models.Position
 import ru.ifmo.sd.world.events.ChangeMazePositionEvent
 import ru.ifmo.sd.world.npc.Npc
-import ru.ifmo.sd.world.npc.strategy.Strategy.Companion.PlayerDirection.Failed
+import ru.ifmo.sd.world.npc.strategy.Strategy.Companion.PlayerDirection.*
 import ru.ifmo.sd.world.representation.Maze
 import ru.ifmo.sd.world.representation.units.EnemyFactory
 import kotlin.math.abs
+import kotlin.math.atan2
 
 /**
  * Интерфейс стратегии поведения NPC.
@@ -62,7 +63,9 @@ interface Strategy {
 
             if (dx >= dy) {
                 while (true) {
-                    if (!checkVisibility(Position(x, y), maze)) {
+                    if ((x != npcPos.row || y != npcPos.column)
+                        && (x != playerPos.row || y != playerPos.column)
+                        && !checkVisibility(Position(x, y), maze)) {
                         return Failed
                     }
                     if (x == playerPos.row) break
@@ -75,7 +78,9 @@ interface Strategy {
                 }
             } else {
                 while (true) {
-                    if (!checkVisibility(Position(x, y), maze)) {
+                    if ((x != npcPos.row || y != npcPos.column)
+                        && (x != playerPos.row || y != playerPos.column)
+                        && !checkVisibility(Position(x, y), maze)) {
                         return Failed
                     }
                     if (y == playerPos.column) break
@@ -88,7 +93,27 @@ interface Strategy {
                 }
             }
 
-            return Failed
+            return getDirection(npcPos, playerPos)
+        }
+
+        private fun getDirection(npcPos: Position, playerPos: Position): PlayerDirection {
+            var rad = atan2((playerPos.row - npcPos.row).toDouble(), (playerPos.column - npcPos.column).toDouble());
+            if (rad < 0) rad += (2 * Math.PI)
+            val deg = rad * (180 / Math.PI)
+            return when (deg) {
+                in 45.0..135.0 -> {
+                    South
+                }
+                in 135.0..225.0 -> {
+                    East
+                }
+                in 225.0..315.0 -> {
+                    North
+                }
+                else -> {
+                    West
+                }
+            }
         }
 
         private fun checkVisibility(pos: Position, maze: Maze): Boolean {

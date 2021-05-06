@@ -11,7 +11,7 @@ import kotlin.math.abs
 
 
 /**
- * Класс, отвечащий агрессивной стратегии поведения NPC.
+ * Класс, отвечающий агрессивной стратегии поведения NPC.
  */
 class Aggressive : Strategy {
     private fun isAdjacent(npcPos: Position, playerPos: Position): Boolean {
@@ -29,27 +29,29 @@ class Aggressive : Strategy {
                 HashSet()
             else ->
                 if (isAdjacent(npc.position, playerPos)) {
-                    EventsHandler
-                        .gameLevel!!
-                        .maze[playerPos]!!
-                        .interact(EventsHandler.interactionExecutor, playerPos)
+                    maze[playerPos]!!.interact(EventsHandler.interactionExecutor, playerPos)
                 } else {
-                    val oldNpcPos = npc.position
-                    npc.position = npc.position + getDirection(direction)
-                    mutableSetOf(
-                        ChangeMazePositionEvent(oldNpcPos, null),
-                        ChangeMazePositionEvent(npc.position, getEnemyFactory().getEnemy())
-                    )
+                    val directionsToMove = getDirection(direction)
+                    val randomPos = Strategy.randomDirection(npc.position, directionsToMove, maze)
+                    if (randomPos != Position(0, 0)) {
+                        val oldNpcPos = npc.position
+                        npc.position = npc.position + randomPos
+                        mutableSetOf(
+                            ChangeMazePositionEvent(oldNpcPos, null),
+                            ChangeMazePositionEvent(npc.position, getEnemyFactory().getEnemy())
+                        )
+                    } else {
+                        HashSet()
+                    }
                 }
         }
 
-
-    private fun getDirection(direction: PlayerDirection): Position =
-        when (direction) {
+    private fun getDirection(direction: PlayerDirection): List<Position> =
+        listOf(when (direction) {
             PlayerDirection.North -> Position(-1, 0)
             PlayerDirection.South -> Position(1, 0)
             PlayerDirection.West -> Position(0, 1)
             PlayerDirection.East -> Position(0, -1)
             PlayerDirection.Failed -> Position(0, 0)
-        }
+        })
 }
