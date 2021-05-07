@@ -14,7 +14,7 @@ class UnitsHealthStorage {
      *
      * @return словарь с жизненными силами юнитов
      */
-    fun getHealths(): Map<Position, Int> {
+    fun getHealthsDictionary(): Map<Position, Int> {
         return healths
     }
 
@@ -34,8 +34,8 @@ class UnitsHealthStorage {
      *
      * @param pos -- позиция юнита
      */
-    fun eliminateUnit(pos: Position) {
-        healths.remove(pos)
+    fun eliminateUnit(pos: Position): Int? {
+        return healths.remove(pos)
     }
 
     /**

@@ -27,7 +27,7 @@ interface InteractionExecutor {
     fun doFor(obj: Enemy, objPos: Position): MutableSet<ChangeMazePositionEvent>
 
     /**
-     * Выполнеяет взаимодействие с игроком.
+     * Выполняет взаимодействие с игроком.
      *
      * @param obj -- тип объекта
      * @param objPos -- позиция объекта

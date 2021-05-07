@@ -4,7 +4,6 @@ import ru.ifmo.sd.httpapi.models.Position
 import ru.ifmo.sd.world.npc.NpcEventProvider
 import ru.ifmo.sd.world.npc.strategy.*
 import ru.ifmo.sd.world.representation.*
-import ru.ifmo.sd.world.representation.units.Enemy
 import ru.ifmo.sd.world.representation.units.Wall
 import kotlin.properties.Delegates
 import kotlin.random.Random
@@ -35,7 +34,7 @@ class LevelGenerator {
              */
             val actualLength = if (length < 4) 9 else 2 * length + 1
             val actualWidth = if (width < 4) 9 else 2 * width + 1
-            // Изначально лабиринт заполненяем стенками
+            // Изначально лабиринт заполняем стенками
             level = Array(actualLength) { IntArray(actualWidth) { 1 } }
 
             // Позиция входа в лабиринт
