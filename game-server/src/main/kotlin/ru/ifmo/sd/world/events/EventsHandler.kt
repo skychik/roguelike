@@ -59,7 +59,7 @@ object EventsHandler {
         gameLevel = LevelGenerator.generateLevel(length, width)
     }
 
-    fun restartGame() {
+    fun closeGame() {
         gameLevel = null
     }
 

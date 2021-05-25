@@ -99,8 +99,7 @@ interface Strategy {
         private fun getDirection(npcPos: Position, playerPos: Position): PlayerDirection {
             var rad = atan2((playerPos.row - npcPos.row).toDouble(), (playerPos.column - npcPos.column).toDouble());
             if (rad < 0) rad += (2 * Math.PI)
-            val deg = rad * (180 / Math.PI)
-            return when (deg) {
+            return when (rad * (180 / Math.PI)) {
                 in 45.0..135.0 -> {
                     South
                 }

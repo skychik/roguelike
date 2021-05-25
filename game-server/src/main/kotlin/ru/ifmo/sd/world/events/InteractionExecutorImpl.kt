@@ -1,6 +1,7 @@
 package ru.ifmo.sd.world.events
 
 import ru.ifmo.sd.httpapi.models.Position
+import ru.ifmo.sd.world.errors.GameServerException
 import ru.ifmo.sd.world.representation.units.*
 
 
@@ -47,7 +48,8 @@ class InteractionExecutorImpl : InteractionExecutor {
     }
 
     override fun doFor(obj: Enemy, objPos: Position): MutableSet<ChangeMazePositionEvent> {
-        val unitsHealthStorage = EventsHandler.gameLevel!!.unitsHealthStorage
+        val unitsHealthStorage = EventsHandler.gameLevel?.unitsHealthStorage
+            ?: throw GameServerException("Game level is not initialized!")
         unitsHealthStorage.decrease(objPos, playerDamage)
         return if (!unitsHealthStorage.isAlive(objPos)) {
             unitsHealthStorage.eliminateUnit(objPos)
@@ -59,7 +61,8 @@ class InteractionExecutorImpl : InteractionExecutor {
     }
 
     override fun doFor(obj: Player, objPos: Position): MutableSet<ChangeMazePositionEvent> {
-        val unitsHealthStorage = EventsHandler.gameLevel!!.unitsHealthStorage
+        val unitsHealthStorage = EventsHandler.gameLevel?.unitsHealthStorage
+            ?: throw GameServerException("Game level is not initialized!")
         unitsHealthStorage.decrease(objPos, npcDamage)
         return if (!unitsHealthStorage.isAlive(objPos)) {
             unitsHealthStorage.eliminateUnit(objPos)

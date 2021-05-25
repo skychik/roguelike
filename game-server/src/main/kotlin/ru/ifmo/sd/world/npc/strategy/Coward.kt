@@ -8,9 +8,32 @@ import ru.ifmo.sd.world.representation.Maze
 import ru.ifmo.sd.world.representation.units.*
 
 /**
- * Класс, отвечащий трусливой стратегии поведения NPC.
+ * Класс, отвечающий трусливой стратегии поведения NPC.
  */
 class Coward : Strategy {
+    companion object {
+        private val north = listOf(
+            Position(1, 0),
+            Position(0, 1),
+            Position(0, -1)
+        )
+        private val south = listOf(
+            Position(-1, 0),
+            Position(0, 1),
+            Position(0, -1)
+        )
+        private val west = listOf(
+            Position(1, 0),
+            Position(0, -1),
+            Position(-1, 0)
+        )
+        private val east = listOf(
+            Position(1, 0),
+            Position(0, 1),
+            Position(1, 0)
+        )
+    }
+
     override fun getEnemyFactory(): EnemyFactory {
         return CowardEnemyFactory()
     }
@@ -36,26 +59,10 @@ class Coward : Strategy {
 
     private fun getDirections(direction: PlayerDirection): List<Position> =
         when (direction) {
-            PlayerDirection.North -> listOf(
-                Position(1, 0),
-                Position(0, 1),
-                Position(0, -1)
-            )
-            PlayerDirection.South -> listOf(
-                Position(-1, 0),
-                Position(0, 1),
-                Position(0, -1)
-            )
-            PlayerDirection.West -> listOf(
-                Position(1, 0),
-                Position(0, -1),
-                Position(-1, 0)
-            )
-            PlayerDirection.East -> listOf(
-                Position(1, 0),
-                Position(0, 1),
-                Position(1, 0)
-            )
+            PlayerDirection.North -> north
+            PlayerDirection.South -> south
+            PlayerDirection.West -> west
+            PlayerDirection.East -> east
             PlayerDirection.Failed -> emptyList()
         }
 }
