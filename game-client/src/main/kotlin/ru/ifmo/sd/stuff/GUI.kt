@@ -1,6 +1,5 @@
 package ru.ifmo.sd.stuff
 
-import kotlinx.coroutines.runBlocking
 import ru.ifmo.sd.client
 import ru.ifmo.sd.httpapi.models.JoinGameInfo
 import ru.ifmo.sd.httpapi.models.Position
@@ -35,6 +34,7 @@ class GUI(title: String, gameConfiguration: JoinGameInfo) : JFrame(), KeyListene
     private val infoLabel = JLabel("")
     private var map = SymbolMap(gameConfiguration)
     private var mapTextPane = MapTextPane()
+    private var isMultiplayer = false
 
     init {
         createUI(title)
@@ -106,17 +106,37 @@ class GUI(title: String, gameConfiguration: JoinGameInfo) : JFrame(), KeyListene
 
     private fun createMenuBar() {
         val menubar = JMenuBar()
-
-        val file = JMenu("Menu")
+        val menu = JMenu("Menu")
 //        file.mnemonic = KeyEvent.VK_ESCAPE
 
-        val eMenuItem = JMenuItem("Restart")
-//        eMenuItem.mnemonic = KeyEvent.VK_R
-        eMenuItem.toolTipText = "Restart game"
-        eMenuItem.addActionListener { remakeMap(restart = true) }
+        val multiplayerItem = if (isMultiplayer) {
+            val item = JMenuItem("Exit multiplayer")
+            item.addActionListener {
+                ServerAPI.exitMultiplayer()
+                isMultiplayer = false
+            }
+            item
+        } else {
+            val item = JMenuItem("Join multiplayer")
+            item.addActionListener {
+                ServerAPI.joinMultiplayer()
+                isMultiplayer = true
+            }
+            item
+        }
 
-        file.add(eMenuItem)
-        menubar.add(file)
+        val restartItem = JMenuItem("Restart")
+//        eMenuItem.mnemonic = KeyEvent.VK_R
+        restartItem.toolTipText = "Restart game"
+        restartItem.addActionListener {
+            isDead = false
+            infoLabel.text = ""
+            remakeMap(restart = true)
+        }
+
+        menu.add(multiplayerItem)
+        menu.add(restartItem)
+        menubar.add(menu)
 
         jMenuBar = menubar
     }

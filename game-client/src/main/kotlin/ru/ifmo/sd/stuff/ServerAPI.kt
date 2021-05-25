@@ -46,4 +46,18 @@ object ServerAPI {
             client!!.get<String>("$address/restart")
         }
     }
+
+    internal fun joinMultiplayer() {
+        runBlocking {
+            println("apiJoinMultiplayer")
+            client!!.get<String>("$address/join_multiplayer")
+        }
+    }
+
+    internal fun exitMultiplayer() {
+        runBlocking {
+            println("apiExitMultiplayer")
+            client!!.get<String>("$address/exit_multiplayer")
+        }
+    }
 }
