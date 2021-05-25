@@ -11,17 +11,19 @@ import ru.ifmo.sd.world.representation.units.PassiveEnemyFactory
  * Класс, отвечающий пассивной стратегии поведения NPC.
  */
 class Passive : Strategy {
+    companion object {
+        private val directionsToMove = listOf(
+            Position(0, 1), Position(0, -1),
+            Position(1, 0), Position(-1, 0)
+        )
+    }
+
     override fun getEnemyFactory(): EnemyFactory {
         return PassiveEnemyFactory()
     }
 
     override fun execute(npc: Npc, playerPos: Position, maze: Maze): MutableSet<ChangeMazePositionEvent> {
-        val directionsToMove = listOf(
-            Position(0, 1), Position(0, -1),
-            Position(1, 0), Position(-1, 0)
-        )
         val randomMove = Strategy.randomDirection(npc.position, directionsToMove, maze)
-
         return if (randomMove != Position(0, 0)) {
             val oldNpcPos = npc.position
             npc.position = npc.position + randomMove
