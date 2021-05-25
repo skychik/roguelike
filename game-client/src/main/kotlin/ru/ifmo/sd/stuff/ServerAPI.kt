@@ -35,7 +35,7 @@ object ServerAPI {
             println("apiMove oldPos=$oldPos, newPos=$newPos")
             return@runBlocking client!!.post<GameMove>("$address/move") {
                 contentType(ContentType.Application.Json)
-                body = PlayerMove(oldPos, newPos)
+                body = PlayerPositionChanging(oldPos, newPos)
             }
         }
     }
