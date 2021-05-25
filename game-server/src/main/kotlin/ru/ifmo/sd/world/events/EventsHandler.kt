@@ -21,14 +21,16 @@ object EventsHandler {
      * Присоединяет нового игрока к текущей игровой сессии, если таковая есть, или создает новую.
      *
      * @param playerName -- имя нового игрока
+     * @param length -- длина игрового уровня
+     * @param width -- ширина игрового уровня
      * @return начальную информацию об игровом уровне
      */
-    fun join(playerName: String): JoinGameInfo {
+    fun join(playerName: String, length: Int?, width: Int?): JoinGameInfo {
         if (playersQueue.contains(playerName)) {
             throw GameServerException("Player with $playerName name already exists.")
         }
         if (gameLevel == null) {
-            throw GameServerException("Game level has not been initialized yet.")
+            startGame(length, width)
         }
         val maze = gameLevel!!.maze
         val newPlayerPos = maze.freePos.random()
@@ -88,7 +90,7 @@ object EventsHandler {
      *
      * @return актуальное состояние игры
      */
-    fun getActualGameState(): GameState {
+    fun getActualGameState(playerName: String): GameState {
         if (gameLevel == null) {
             throw GameServerException("Game level has not been initialized yet.")
         }
@@ -96,21 +98,23 @@ object EventsHandler {
             throw GameServerException("No player connected on level.")
         }
         return GameState(
-            playersQueue.peek(), MazeData(getMazeData(gameLevel!!.maze)),
+            playersQueue.peek(), playersQueue.contains(playerName),
+            MazeData(getMazeData(gameLevel!!.maze)),
             getHealthsData(gameLevel!!.unitsHealthStorage)
         )
     }
 
-    /**
-     * Создает новую игровую сессию.
-     *
-     * @param levelConfiguration -- конфигурация игрового уровня
-     */
-    fun startGame(levelConfiguration: LevelConfiguration) {
-        if (gameLevel == null) {
-            gameLevel = LevelGenerator.generateLevel(
-                levelConfiguration.length,
-                levelConfiguration.width
+    private fun startGame(length: Int?, width: Int?) {
+        gameLevel = if (length == null && width == null) {
+            LevelGenerator.generateLevel()
+        } else if (length == null) {
+            LevelGenerator.generateLevel(width!!)
+        } else if (width == null) {
+            LevelGenerator.generateLevel(length)
+        } else {
+            LevelGenerator.generateLevel(
+                length,
+                width
             )
         }
     }
@@ -141,13 +145,16 @@ object EventsHandler {
         }
         playersQueue.add(playersQueue.poll())
         return if (gameLevel.maze[targetPos] == null) {
-            moveToFreePos(playerPos, targetPos, gameLevel)
+            moveToFreePos(playerName, playerPos, targetPos, gameLevel)
         } else {
-            moveToOccupiedPos(playerPos, targetPos, gameLevel)
+            moveToOccupiedPos(playerName, playerPos, targetPos, gameLevel)
         }
     }
 
-    private fun moveToFreePos(playerPos: Position, targetPos: Position, gameLevel: GameLevel): GameMove {
+    private fun moveToFreePos(
+        playerName: String, playerPos: Position,
+        targetPos: Position, gameLevel: GameLevel
+    ): GameMove {
         val maze = gameLevel.maze
         val healths = gameLevel.unitsHealthStorage
         // ход игрока
@@ -164,6 +171,7 @@ object EventsHandler {
                 targetPos
             } else {
                 healths.eliminateUnit(targetPos)
+                playersQueue.remove(playerName)
                 Position(-1, -1)
             }
         return GameMove(newPlayerPos, npcMove.map {
@@ -174,7 +182,10 @@ object EventsHandler {
         })
     }
 
-    private fun moveToOccupiedPos(playerPos: Position, targetPos: Position, gameLevel: GameLevel): GameMove {
+    private fun moveToOccupiedPos(
+        playerName: String, playerPos: Position,
+        targetPos: Position, gameLevel: GameLevel
+    ): GameMove {
         val maze = gameLevel.maze
         // результат хода игрока
         val playerMove = maze[targetPos]!!.interact(interactionExecutor, targetPos)
@@ -185,7 +196,10 @@ object EventsHandler {
         npcMove.forEach { maze[it.position] = it.newMazeObj }
         val newPlayerPos =
             if (maze[playerPos] != null) playerPos
-            else Position(-1, -1)
+            else {
+                playersQueue.remove(playerName)
+                Position(-1, -1)
+            }
 
         playerMove.forEach { npcMove.add(it) }
 
