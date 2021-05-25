@@ -11,27 +11,24 @@ import ru.ifmo.sd.world.events.EventsHandler
 
 fun Route.gameRouting() {
     route("/") {
-        post("/start") {
-            val levelConfiguration = call.receive<LevelConfiguration>()
-            EventsHandler.startGame(levelConfiguration)
-        }
-
         get("/gameState") {
-            val gameState = try {
-                EventsHandler.getActualGameState()
-            } catch (e: GameServerException) {
-                call.respond(HttpStatusCode.BadRequest, e.localizedMessage)
+            val playerName = call.request.queryParameters["playerName"]
+            if (playerName == null) {
+                call.respond(HttpStatusCode.BadRequest, "Cannot get game state.")
+            } else {
+                val gameState = try {
+                    EventsHandler.getActualGameState(playerName)
+                } catch (e: GameServerException) {
+                    call.respond(HttpStatusCode.BadRequest, e.localizedMessage)
+                }
+                call.respond(HttpStatusCode.Accepted, gameState)
             }
-            call.respond(HttpStatusCode.Accepted, gameState)
         }
 
-        get("/join") {
-            val newPlayerName = call.request.queryParameters["playerName"]
-            if (newPlayerName == null) {
-                call.respond(HttpStatusCode.BadRequest, "Could not get player name.")
-            }
+        post("/join") {
+            val joinInfo = call.receive<JoinInfo>()
             val startedGame = try {
-                EventsHandler.join(newPlayerName!!)
+                EventsHandler.join(joinInfo.playerName, joinInfo.length, joinInfo.width)
             } catch (e: GameServerException) {
                 call.respond(message = e.localizedMessage, status = HttpStatusCode.BadRequest)
             }
