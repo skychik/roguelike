@@ -1,5 +1,6 @@
 package ru.ifmo.sd.stuff
 
+import ru.ifmo.sd.httpapi.models.GameState
 import ru.ifmo.sd.httpapi.models.JoinGameInfo
 import ru.ifmo.sd.httpapi.models.MazeEventData
 import ru.ifmo.sd.stuff.ColoredSymbol.*
@@ -16,19 +17,29 @@ enum class ColoredSymbol(val char: Char, val color: Color = BLACK) {
     NONE(' '),
 }
 
-class SymbolMap(config: JoinGameInfo) {
-    val rows: List<MutableList<ColoredSymbol>> = config.maze.levelMaze.map { arr ->
-        arr.map { i -> mazeObjToSymbol(i) }.toMutableList()
-    }
+class SymbolMap {
+
+    val rows: List<MutableList<ColoredSymbol>>
     val rowSize: Int
         get() = rows.size
     val columnSize: Int
         get() = rows[0].size
-    var enemyAmount = config.maze.levelMaze.sumBy { arr -> arr.sumBy { i -> if (isEnemy(i)) 1 else 0 } }
+    var enemyAmount: Int
         private set
 
-    init {
+    constructor(config: JoinGameInfo) {
+        this.rows = config.maze.levelMaze.map { arr ->
+            arr.map { i -> mazeObjToSymbol(i) }.toMutableList()
+        }
+        this.enemyAmount = config.maze.levelMaze.sumBy { arr -> arr.sumBy { i -> if (isEnemy(i)) 1 else 0 } }
         rows[config.playerPos.row][config.playerPos.column] = PLAYER
+    }
+
+    constructor(config: GameState) {
+        this.rows = config.maze.levelMaze.map { arr ->
+            arr.map { i -> mazeObjToSymbol(i) }.toMutableList()
+        }
+        this.enemyAmount = config.maze.levelMaze.sumBy { arr -> arr.sumBy { i -> if (isEnemy(i)) 1 else 0 } }
     }
 
     private fun mazeObjToSymbol(mazeObj: Int): ColoredSymbol = when (mazeObj) {

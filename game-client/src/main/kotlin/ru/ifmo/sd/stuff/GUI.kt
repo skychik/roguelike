@@ -1,8 +1,6 @@
 package ru.ifmo.sd.stuff
 
-import ru.ifmo.sd.client
-import ru.ifmo.sd.httpapi.models.JoinGameInfo
-import ru.ifmo.sd.httpapi.models.Position
+import ru.ifmo.sd.httpapi.models.*
 import ru.ifmo.sd.stuff.ColoredSymbol.*
 import java.awt.BorderLayout
 import java.awt.Color.*
@@ -34,11 +32,14 @@ class GUI(title: String, gameConfiguration: JoinGameInfo) : JFrame(), KeyListene
     private val infoLabel = JLabel("")
     private var map = SymbolMap(gameConfiguration)
     private var mapTextPane = MapTextPane()
-    private var isMultiplayer = false
+    private var isMultiplayer = true
+    private var currPlayer: String? = null
+    private var prevGameState: GameState? = null
 
     init {
         createUI(title)
-        start()
+        gameStateThread()
+        startRepaintThread()
     }
 
     private fun createUI(title: String) {
@@ -51,7 +52,12 @@ class GUI(title: String, gameConfiguration: JoinGameInfo) : JFrame(), KeyListene
         defaultCloseOperation = EXIT_ON_CLOSE
         addWindowListener(object : WindowAdapter() {
             override fun windowClosing(e: WindowEvent) {
-                client!!.close()
+                try {
+                    disconnect(currPos)
+                } catch (e: Exception) {
+                    println(e.localizedMessage)
+                }
+                ServerAPI.client!!.close()
                 e.window.dispose()
             }
         })
@@ -68,17 +74,41 @@ class GUI(title: String, gameConfiguration: JoinGameInfo) : JFrame(), KeyListene
         requestFocusInWindow()
     }
 
-    private fun start() {
+    private fun startRepaintThread() {
         Thread {
             while (true) {
-
                 try {
                     Thread.sleep(30)
                 } catch (e: InterruptedException) {
                     break
                 }
-
                 mainPanel.repaint()
+            }
+        }.start()
+    }
+
+    private fun gameStateThread() {
+        Thread {
+            while (true) {
+                try {
+                    Thread.sleep(100)
+                } catch (e: InterruptedException) {
+                    break
+                }
+                if (!isYourTurn()) {
+                    val gameState = getGameState()
+                    if (prevGameState != gameState) {
+                        println("New state $gameState")
+                        prevGameState = gameState
+                        currPlayer = gameState.currentMovePlayerName
+                        isDead = !gameState.isAlive
+                        infoLabel.text = "$currPlayer is making a move"
+                        map = SymbolMap(gameState)
+                        reloadMapTextPane()
+                    }
+                } else {
+                    infoLabel.text = "Your turn!"
+                }
             }
         }.start()
     }
@@ -112,15 +142,26 @@ class GUI(title: String, gameConfiguration: JoinGameInfo) : JFrame(), KeyListene
         val multiplayerItem = if (isMultiplayer) {
             val item = JMenuItem("Exit multiplayer")
             item.addActionListener {
-                ServerAPI.exitMultiplayer()
-                isMultiplayer = false
+                proceedChangingGameMod()
             }
             item
         } else {
             val item = JMenuItem("Join multiplayer")
             item.addActionListener {
-                ServerAPI.joinMultiplayer()
-                isMultiplayer = true
+                var shouldChooseAnotherNickname = false
+                while (true) {
+                    val message = "Type your nickname" + if (shouldChooseAnotherNickname) " (choose another one)" else ""
+                    ServerAPI.nickname = JOptionPane.showInputDialog(this, message)
+                    var success = true
+                    try {
+                        join()
+                    } catch (e: Exception) {
+                        success = false
+                        shouldChooseAnotherNickname = true
+                    }
+                    if (success) break
+                }
+                proceedChangingGameMod()
             }
             item
         }
@@ -194,7 +235,7 @@ class GUI(title: String, gameConfiguration: JoinGameInfo) : JFrame(), KeyListene
         } else {
             println("e == null")
         }
-        if (!didMove) {
+        if (!didMove && isYourTurn()) {
             var newPos = currPos
             when (e?.keyCode) {
                 null -> {
@@ -250,7 +291,8 @@ class GUI(title: String, gameConfiguration: JoinGameInfo) : JFrame(), KeyListene
                     // stepped away from the level
                     remakeMap()
                 } else {
-                    val gameMove = ServerAPI.move(prevPos!!, currPos)
+                    val gameMove = move(prevPos!!, currPos)
+                    currPlayer = null
                     println("gameMove=$gameMove")
                     if (gameMove.playerPosition == Position(-1, -1)) {
                         // player is dead
@@ -278,11 +320,23 @@ class GUI(title: String, gameConfiguration: JoinGameInfo) : JFrame(), KeyListene
     }
 
     private fun remakeMap(restart: Boolean = false) {
-        ServerAPI.restart() // may break previous player's progress
+        disconnect(currPos)
         if (restart) {
             ServerAPI.resetMapSize()
         }
-        val newConfig = ServerAPI.join()
+//        start() // may break previous player's progress
+        val newConfig = join()
+        map = SymbolMap(newConfig)
+        val prevPosSaved = prevPos
+        currPos = newConfig.playerPos
+        prevPos = prevPosSaved
+        reloadMapTextPane()
+    }
+
+    private fun proceedChangingGameMod() {
+        disconnect(currPos)
+        isMultiplayer = !isMultiplayer
+        val newConfig = join()
         map = SymbolMap(newConfig)
         val prevPosSaved = prevPos
         currPos = newConfig.playerPos
@@ -316,5 +370,31 @@ class GUI(title: String, gameConfiguration: JoinGameInfo) : JFrame(), KeyListene
         mapTextPane.selectionColor = symbol.color
         mapTextPane.replaceSelection(symbol.char.toString())
         mapTextPane.isEditable = false
+    }
+
+    /////////////////// ServerAPI helpers
+
+    private fun join(): JoinGameInfo {
+        return if (isMultiplayer) ServerAPI.joinMultiplayer()
+        else ServerAPI.joinLocal()
+    }
+
+    private fun getGameState(): GameState {
+        return if (isMultiplayer) ServerAPI.getGameStateMultiplayer()
+        else ServerAPI.getGameStateLocal()
+    }
+
+    private fun move(oldPos: Position, newPos: Position): GameMove {
+        return if (isMultiplayer) ServerAPI.moveMultiplayer(oldPos, newPos)
+        else ServerAPI.moveLocal(oldPos, newPos)
+    }
+
+    private fun disconnect(currPos: Position) {
+        if (isMultiplayer) ServerAPI.disconnectMultiplayer(currPos)
+        else ServerAPI.disconnectLocal(currPos)
+    }
+
+    private fun isYourTurn(): Boolean {
+        return currPlayer == ServerAPI.nickname
     }
 }
