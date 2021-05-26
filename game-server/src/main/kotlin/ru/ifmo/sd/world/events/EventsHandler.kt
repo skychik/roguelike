@@ -99,6 +99,7 @@ object EventsHandler {
         }
         return GameState(
             playersQueue.peek(), playersQueue.contains(playerName),
+            gameLevel!!.npcEventProvider.isAtLeastOneNpcAlive(),
             MazeData(getMazeData(gameLevel!!.maze)),
             getHealthsData(gameLevel!!.unitsHealthStorage)
         )

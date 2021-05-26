@@ -56,4 +56,13 @@ class NpcEventProvider {
     fun eliminateNpc(pos: Position) {
         npc.removeIf { it.position == pos }
     }
+
+    /**
+     * Возвращает флаг выживания npc.
+     *
+     * @return true -- если хотя бы один npc жив, иначе -- false
+     */
+    fun isAtLeastOneNpcAlive(): Boolean {
+        return npc.isNotEmpty()
+    }
 }
