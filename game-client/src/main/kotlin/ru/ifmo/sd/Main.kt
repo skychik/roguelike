@@ -11,6 +11,7 @@ import java.awt.EventQueue
 import javax.swing.JFrame
 import javax.swing.JOptionPane
 
+private val inputNameFrame = JFrame()
 
 fun main() {
     ServerAPI.client = HttpClient(CIO) {
@@ -20,8 +21,14 @@ fun main() {
     }
 //    ServerAPI.initLocalServer()
     val response = inputName()
-    println(response)
-    EventQueue.invokeLater { createAndShowGUI(response) }
+    println(ServerAPI.nickname)
+    if (ServerAPI.nickname == null) {
+        ServerAPI.client!!.close()
+        inputNameFrame.dispose()
+    } else {
+        println(response)
+        EventQueue.invokeLater { createAndShowGUI(response!!) }
+    }
 }
 
 private fun createAndShowGUI(config: JoinGameInfo) {
@@ -30,27 +37,38 @@ private fun createAndShowGUI(config: JoinGameInfo) {
     frame.isVisible = true
 }
 
-private fun inputName(): JoinGameInfo {
-    val frame = JFrame()
-    frame.isVisible = true
-    frame.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
-    frame.setLocationRelativeTo(null)
+private fun inputName(): JoinGameInfo? {
+    inputNameFrame.isVisible = true
+    inputNameFrame.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
+    inputNameFrame.setLocationRelativeTo(null)
 
-    var shouldChooseAnotherNickname = false
+    var isNameTaken = false
+    var isNameValid = true
     var response: JoinGameInfo? = null
     while (true) {
-        val message = "Type your nickname" + if (shouldChooseAnotherNickname) " (choose another one)" else ""
-        ServerAPI.nickname = JOptionPane.showInputDialog(frame, message)
+        val message = "Type your nickname" +
+                if (!isNameValid) " (name should contain latin letters or digits)"
+                else if (isNameTaken) " (choose another one)"
+                else ""
+        ServerAPI.nickname = JOptionPane.showInputDialog(inputNameFrame, message)
+
+        isNameValid = validateNickname(ServerAPI.nickname)
+        if (!isNameValid) continue
+
         var success = true
         try {
             response = ServerAPI.joinMultiplayer()
         } catch (e: Exception) {
             println(e.localizedMessage)
             success = false
-            shouldChooseAnotherNickname = true
+            isNameTaken = true
         }
         if (success) break
     }
-    frame.isVisible = false
-    return response!!
+    inputNameFrame.isVisible = false
+    return response
+}
+
+private fun validateNickname(name: String?): Boolean {
+    return name != null && name.length < 20 && name.matches("[a-zA-Z0-9]+".toRegex())
 }

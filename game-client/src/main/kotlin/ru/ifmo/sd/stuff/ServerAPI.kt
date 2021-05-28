@@ -18,6 +18,7 @@ object ServerAPI {
     private var port = 8081
     internal var nickname: String? = "null"
     private const val localNickname = "local"
+    private var localServerProc: Process? = null;
 
     internal fun initLocalServer() {
         while (true) {
@@ -27,9 +28,11 @@ object ServerAPI {
             } else port++
         }
         println("Trying to start local server at port=${port}")
-        val cmd = "nohup ../game-server/build/install/game-server/bin/game-server &" // TODO call .bat for windows
-        val env = arrayOf("PORT=${port}", "JAVA_HOME=/Users/macbook/.jenv/versions/1.8") // TODO JAVA_HOME
-        val proc = Runtime.getRuntime().exec(cmd, env) // TODO kill it after closing the client
+        println(System.getProperty("user.dir"))
+        val cmd = "../game-server/build/install/game-server/bin/game-server" // TODO call .bat for windows
+//        val env = arrayOf("PORT=${port}", "JAVA_HOME=/Users/macbook/.jenv/versions/1.8") // TODO JAVA_HOME
+        val env = arrayOf("PORT=${port}")
+        localServerProc = Runtime.getRuntime().exec(cmd, env) // TODO kill it after closing the client
         while (true) {
             var started = true
             try {
@@ -41,6 +44,10 @@ object ServerAPI {
             if (started) break
         }
         println("Local server successfully started")
+    }
+
+    internal fun killLocalServer() {
+        if (localServerProc?.isAlive == true) localServerProc?.destroy()
     }
 
 //    internal fun startLocal() {
@@ -65,7 +72,7 @@ object ServerAPI {
 
     internal fun joinLocal(): JoinGameInfo {
         return runBlocking {
-            println("apiJoinLocal")
+//            println("apiJoinLocal")
             return@runBlocking client!!.post<JoinGameInfo>("$LOCAL_ADDRESS/join") {
                 contentType(ContentType.Application.Json)
                 body = JoinInfo(localNickname, length = mapSize.first, width = mapSize.second)

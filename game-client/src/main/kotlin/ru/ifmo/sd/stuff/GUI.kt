@@ -38,7 +38,6 @@ class GUI(title: String, gameConfiguration: JoinGameInfo) : JFrame(), KeyListene
 
     init {
         createUI(title)
-        gameStateThread()
         startRepaintThread()
     }
 
@@ -58,6 +57,7 @@ class GUI(title: String, gameConfiguration: JoinGameInfo) : JFrame(), KeyListene
                     println(e.localizedMessage)
                 }
                 ServerAPI.client!!.close()
+                ServerAPI.killLocalServer()
                 e.window.dispose()
             }
         })
@@ -82,33 +82,29 @@ class GUI(title: String, gameConfiguration: JoinGameInfo) : JFrame(), KeyListene
                 } catch (e: InterruptedException) {
                     break
                 }
-                mainPanel.repaint()
-            }
-        }.start()
-    }
-
-    private fun gameStateThread() {
-        Thread {
-            while (true) {
-                try {
-                    Thread.sleep(100)
-                } catch (e: InterruptedException) {
-                    break
-                }
                 if (!isYourTurn()) {
                     val gameState = getGameState()
                     if (prevGameState != gameState) {
                         println("New state $gameState")
-                        prevGameState = gameState
-                        currPlayer = gameState.currentMovePlayerName
-                        isDead = !gameState.isAlive
-                        infoLabel.text = "$currPlayer is making a move"
-                        map = SymbolMap(gameState)
-                        reloadMapTextPane()
+                        if (!gameState.isAtLeastOneNpcAlive) {
+                            ServerAPI.increaseMapSize()
+                            remakeMap()
+                        } else {
+                            prevGameState = gameState
+                            currPlayer = gameState.currentMovePlayerName
+                            isDead = !gameState.isAlive
+                            if (isYourTurn()) {
+                                infoLabel.text = "Your turn!"
+                            } else {
+                                infoLabel.text = "$currPlayer is making a move"
+                            }
+                            map = SymbolMap(gameState)
+                            reloadMapTextPane()
+                        }
                     }
-                } else {
-                    infoLabel.text = "Your turn!"
                 }
+
+                mainPanel.repaint()
             }
         }.start()
     }
@@ -166,17 +162,17 @@ class GUI(title: String, gameConfiguration: JoinGameInfo) : JFrame(), KeyListene
             item
         }
 
-        val restartItem = JMenuItem("Restart")
-//        eMenuItem.mnemonic = KeyEvent.VK_R
-        restartItem.toolTipText = "Restart game"
-        restartItem.addActionListener {
-            isDead = false
-            infoLabel.text = ""
-            remakeMap(restart = true)
-        }
+//        val restartItem = JMenuItem("Restart")
+////        eMenuItem.mnemonic = KeyEvent.VK_R
+//        restartItem.toolTipText = "Restart game"
+//        restartItem.addActionListener {
+//            isDead = false
+//            infoLabel.text = ""
+//            remakeMap(restart = true)
+//        }
 
         menu.add(multiplayerItem)
-        menu.add(restartItem)
+//        menu.add(restartItem)
         menubar.add(menu)
 
         jMenuBar = menubar
@@ -286,26 +282,26 @@ class GUI(title: String, gameConfiguration: JoinGameInfo) : JFrame(), KeyListene
                 this.mapPanel.repaint()
                 this.mapTextPane.repaint()
 
-                if ((currPos.row == map.rowSize - 1 && currPos.column == map.columnSize - 2) ||
-                    (currPos.row == 0 && currPos.column == 1)) {
-                    // stepped away from the level
-                    remakeMap()
-                } else {
+//                if ((currPos.row == map.rowSize - 1 && currPos.column == map.columnSize - 2) ||
+//                    (currPos.row == 0 && currPos.column == 1)) {
+//                    // stepped away from the level
+//                    remakeMap()
+//                } else {
                     val gameMove = move(prevPos!!, currPos)
                     currPlayer = null
                     println("gameMove=$gameMove")
-                    if (gameMove.playerPosition == Position(-1, -1)) {
-                        // player is dead
-                        isDead = true
-                        infoLabel.text = "You are dead!"
-                        replacePaneSymbol(prevPos!!, NONE)
-                    } else {
+//                    if (gameMove.playerPosition == Position(-1, -1)) {
+//                        // player is dead
+//                        isDead = true
+//                        infoLabel.text = "You are dead!"
+//                        replacePaneSymbol(prevPos!!, NONE)
+//                    } else {
                         // player moved
                         replaceSymbol(prevPos!!, gameMove.playerPosition)
                         map.applyDiff(gameMove.events)
                         if (map.enemyAmount == 0) {
                             ServerAPI.increaseMapSize()
-                            remakeMap()
+//                            remakeMap()
                         } else {
                             // reload pane
                             val prevPosSaved = prevPos
@@ -313,34 +309,38 @@ class GUI(title: String, gameConfiguration: JoinGameInfo) : JFrame(), KeyListene
                             prevPos = prevPosSaved
                             reloadMapTextPane()
                         }
-                    }
-                }
+//                    }
+//                }
             }
         }
     }
 
     private fun remakeMap(restart: Boolean = false) {
         disconnect(currPos)
-        if (restart) {
-            ServerAPI.resetMapSize()
-        }
+//        if (restart) {
+//            ServerAPI.resetMapSize()
+//        }
 //        start() // may break previous player's progress
         val newConfig = join()
+        println("newConfig")
+        println(newConfig.toString())
         map = SymbolMap(newConfig)
-        val prevPosSaved = prevPos
+        isDead = false
+//        val prevPosSaved = prevPos
         currPos = newConfig.playerPos
-        prevPos = prevPosSaved
+//        prevPos = prevPosSaved
         reloadMapTextPane()
     }
 
+    // TODO
     private fun proceedChangingGameMod() {
         disconnect(currPos)
         isMultiplayer = !isMultiplayer
         val newConfig = join()
         map = SymbolMap(newConfig)
-        val prevPosSaved = prevPos
+//        val prevPosSaved = prevPos
         currPos = newConfig.playerPos
-        prevPos = prevPosSaved
+//        prevPos = prevPosSaved
         reloadMapTextPane()
     }
 
