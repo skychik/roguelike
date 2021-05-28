@@ -72,17 +72,21 @@ object EventsHandler {
      * @param playerPos -- позиция игрока для отсоединения
      */
     fun disconnect(playerName: String, playerPos: Position) {
-        playersQueue.remove(playerName)
-        if (playersQueue.isEmpty()) {
-            closeGame()
-        }
         if (gameLevel == null) {
-            throw GameServerException("Game already finished.")
+            throw GameServerException("Game level has not been initialized yet.")
+        }
+        val wasRemoved = playersQueue.remove(playerName)
+        if (!wasRemoved) {
+            throw GameServerException("Could not find player with name ${playerName}.")
         }
         val healths = gameLevel!!.unitsHealthStorage
         healths.eliminateUnit(playerPos)
         val maze = gameLevel!!.maze
         maze[playerPos] = null
+
+        if (playersQueue.isEmpty()) {
+            closeGame()
+        }
     }
 
     /**
@@ -122,7 +126,6 @@ object EventsHandler {
 
     private fun closeGame() {
         gameLevel = null
-        playersQueue.clear()
     }
 
     /**
