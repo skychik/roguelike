@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 data class GameState(
     val currentMovePlayerName: String,
     val isAlive: Boolean,
-    val isGameOver: Boolean,
+    val isAtLeastOneNpcAlive: Boolean,
     val maze: MazeData,
     val unitsHealth: List<Pair<Position, Int>>
 )
